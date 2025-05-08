@@ -1,0 +1,10 @@
+export enum ListOfValueType {
+    Frequency = 'Frequency',
+    Voltage = 'Voltage',
+    StartsPerHour = 'Starts per Hour',
+    AmbientTemp = 'Ambient Temp',
+    Accessories = 'Accessories',
+    Application = 'Application',
+    Segment = 'Segment',
+    StdPaymentTerms = 'Std Payment Terms'
+}
