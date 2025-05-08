@@ -33,7 +33,7 @@ export interface MotorMapping {
     cdf: string
     ambientTemp: string
     tempRise: string
-    accessories: string
+    accessories: string[]
     brake: string
     encoderMounting: string
     encoderMountingIfYes: string
@@ -147,10 +147,10 @@ const InquiryForm = () => {
         startsPerHour: "",
         cdf: "",
         ambientTemp: "50",
-        tempRise: "70",
-        accessories: "",
-        brake: "No",
-        encoderMounting: "No",
+        tempRise: "Limited to Class F",
+        accessories: [],
+        brake: "",
+        encoderMounting: "",
         encoderMountingIfYes: "",
         application: "",
         segment: "",
@@ -209,9 +209,10 @@ const InquiryForm = () => {
     const zoneOptions = ['I', 'II', '22', '21'];
     const gasGroupOptions = ['I', 'IIA IIB', 'IIC'];
     const tempClassOptions = ['T3', 'T4', 'T5', 'T6'];
-    const dutyOptions = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S2-15min', 'S2-30Min'];
+    const dutyOptions = ['S1', 'S2-15min', 'S2-30min', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'];
     const cdfOptions = ['25%', '40%', '60%', '100%'];
-    const tempRiseOptions = ['Limited to ClassB', 'Limited to Class F', 'Limited to Class H'];
+    const tempRiseOptions = ['Limited to Class F'];
+    const tempRiseOptionsH = ['Limited to Class B', 'Limited to Class F', 'Limited to Class H'];
     const yesNoOptions = ['Yes', 'No'];
     const encoderScopeOptions = ['Customer Scope', 'Manufacturer Scope'];
 
@@ -364,6 +365,10 @@ const InquiryForm = () => {
     const handleBrandChange = (e: any) => {
         const { name, value } = e.target;
         // Ensure the value only has up to two decimal places
+
+
+
+
         if (name === 'kw') {
             const formattedValue = value
                 .replace(/[^\d.]/g, '') // Allow only digits and decimal point
@@ -427,46 +432,6 @@ const InquiryForm = () => {
         setBrandInput({
             id: 0,
             inquiryId: 0,
-            motorType: "",
-            kw: "",
-            hp: "",
-            phase: "",
-            pole: "",
-            frameSize: "",
-            dop: "",
-            insulationClass: "",
-            efficiency: "",
-            voltage: "",
-            frequency: "",
-            quantity: "",
-            mounting: "",
-            safeAreaHazardousArea: "",
-            brand: "",
-            ifHazardousArea: "",
-            tempClass: "",
-            gasGroup: "",
-            zone: "",
-            hardadousDescription: "",
-            duty: "",
-            startsPerHour: "",
-            cdf: "",
-            ambientTemp: "",
-            tempRise: "",
-            accessories: "",
-            brake: "",
-            encoderMounting: "",
-            encoderMountingIfYes: "",
-            application: "",
-            segment: "",
-            narration: "",
-            amount: ""
-        });
-    };
-
-    const handleOpenModal = () => {
-        setMotorMappingData({
-            id: 0,
-            inquiryId: 0,
             motorType: "LT",
             kw: "",
             hp: "",
@@ -491,15 +456,55 @@ const InquiryForm = () => {
             startsPerHour: "",
             cdf: "",
             ambientTemp: "50",
-            tempRise: "70",
-            accessories: "",
-            brake: "No",
-            encoderMounting: "No",
+            tempRise: "Limited to Class F",
+            accessories: [],
+            brake: "",
+            encoderMounting: "",
             encoderMountingIfYes: "",
             application: "",
             segment: "",
             narration: "",
             amount: "",
+        });
+    };
+
+    const handleOpenModal = () => {
+        setMotorMappingData({
+            id: 0,
+            inquiryId: 0,
+            motorType: "LT",
+        kw: "",
+        hp: "",
+        phase: "Three",
+        pole: "4",
+        frameSize: "",
+        dop: "IP55",
+        insulationClass: "F",
+        efficiency: "IE2",
+        voltage: "415",
+        frequency: "50",
+        quantity: "",
+        mounting: "B3",
+        safeAreaHazardousArea: "Safe Area",
+        brand: "",
+        ifHazardousArea: "",
+        tempClass: "T3",
+        gasGroup: "IIA IIB",
+        zone: "I",
+        hardadousDescription: "",
+        duty: "S1",
+        startsPerHour: "",
+        cdf: "",
+        ambientTemp: "50",
+        tempRise: "Limited to Class F",
+        accessories: [],
+        brake: "",
+        encoderMounting: "",
+        encoderMountingIfYes: "",
+        application: "",
+        segment: "",
+        narration: "",
+        amount: "",
         });
         setOpenModal(true);
     };
@@ -630,7 +635,32 @@ const InquiryForm = () => {
             }
         }
     };
-
+    const handleMultiEnumChangeValue = (
+        type: ListOfValueType,
+        setFunction: React.Dispatch<React.SetStateAction<any>>
+      ) => {
+        return async (event: any, newValue: any[]) => {
+          const cleanedValues = await Promise.all(
+            newValue.map(async (item) => {
+              if (typeof item === 'string') {
+                await handleEnumChange(type, item.trim());
+                return item.trim();
+              } else if (item.inputValue) {
+                const val = item.inputValue.trim();
+                await handleEnumChange(type, val);
+                return val;
+              } else {
+                return item.label;
+              }
+            })
+          );
+      
+          setFunction((prev: any) => ({
+            ...prev,
+            [type]: cleanedValues
+          }));
+        };
+      };
     const handleEnumChangeValue = (type: ListOfValueType, setFunction: React.Dispatch<React.SetStateAction<any>>) => {
         return async (event: any, newValue: any) => {
 
@@ -1276,11 +1306,11 @@ const InquiryForm = () => {
                             </Typography>
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 10 }}>
+                        <Grid size={{ xs: 12 }}>
                             <Button
                                 variant="contained"
                                 component="label"
-                                fullWidth
+                                
                             >
                                 Choose Files
                                 <input
@@ -1663,29 +1693,28 @@ const InquiryForm = () => {
                                             onChange={handleBrandChange}
                                         />
                                     </Grid>
+                                    {/* Temp Class */}
+                                    <Grid size={{ xs: 12, sm: 4 }} >
+                                        <CustomSelect
+                                            label="Temp Class"
+                                            name="tempClass"
+                                            value={brandInput.tempClass}
+                                            options={tempClassOptions}
+                                            onChange={handleBrandChange}
+                                        />
+                                    </Grid>
+
+                                    <Grid size={{ xs: 12, sm: 4 }} >
+                                        <TextField
+                                            fullWidth
+                                            label="Hazardous Area Description"
+                                            name="hardadousDescription"
+                                            value={brandInput.hardadousDescription}
+                                            onChange={handleBrandChange}
+                                        />
+                                    </Grid>
                                 </>
                             )}
-
-                            {/* Temp Class */}
-                            <Grid size={{ xs: 12, sm: 4 }} >
-                                <CustomSelect
-                                    label="Temp Class"
-                                    name="tempClass"
-                                    value={brandInput.tempClass}
-                                    options={tempClassOptions}
-                                    onChange={handleBrandChange}
-                                />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 4 }} >
-                                <TextField
-                                    fullWidth
-                                    label="Hazardous Area Description"
-                                    name="hardadousDescription"
-                                    value={brandInput.hardadousDescription}
-                                    onChange={handleBrandChange}
-                                />
-                            </Grid>
 
                             {/* Duty */}
                             <Grid size={{ xs: 12, sm: 4 }} >
@@ -1698,7 +1727,7 @@ const InquiryForm = () => {
                                 />
                             </Grid>
                             {/* Starts per Hour */}
-                            <Grid size={{ xs: 12, sm: 4 }} >
+                            {(brandInput.duty === 'S2-15min' || brandInput.duty === 'S2-30min') && (<Grid size={{ xs: 12, sm: 4 }} >
                                 <Autocomplete
                                     freeSolo
                                     options={startsPerHour}
@@ -1722,9 +1751,9 @@ const InquiryForm = () => {
                                         <TextField {...params} label="Starts per Hour" variant="outlined" />
                                     )}
                                 />
-                            </Grid>
+                            </Grid>)}
                             {/* CDF */}
-                            <Grid size={{ xs: 12, sm: 4 }} >
+                            {(brandInput.duty === 'S2-15min' || brandInput.duty === 'S2-30min') && (<Grid size={{ xs: 12, sm: 4 }} >
                                 <CustomSelect
                                     label="CDF"
                                     name="cdf"
@@ -1733,6 +1762,8 @@ const InquiryForm = () => {
                                     onChange={handleBrandChange}
                                 />
                             </Grid>
+
+                            )}
                             {/* Ambient Temperature */}
                             <Grid size={{ xs: 12, sm: 4 }} >
                                 <Autocomplete
@@ -1761,7 +1792,7 @@ const InquiryForm = () => {
                             </Grid>
 
                             {/* Temp Rise */}
-                            <Grid size={{ xs: 12, sm: 4 }} >
+                            {brandInput.insulationClass === 'F' && (<Grid size={{ xs: 12, sm: 4 }} >
                                 <CustomSelect
                                     label="Temp Rise"
                                     name="tempRise"
@@ -1769,16 +1800,27 @@ const InquiryForm = () => {
                                     options={tempRiseOptions}
                                     onChange={handleBrandChange}
                                 />
-                            </Grid>
+                            </Grid>)}
+
+                            {brandInput.insulationClass === 'H' && (<Grid size={{ xs: 12, sm: 4 }} >
+                                <CustomSelect
+                                    label="Temp Rise"
+                                    name="tempRise"
+                                    value={brandInput.tempRise}
+                                    options={tempRiseOptionsH}
+                                    onChange={handleBrandChange}
+                                />
+                            </Grid>)}
 
                             {/* Accessories */}
                             <Grid size={{ xs: 12, sm: 4 }} >
                                 <Autocomplete
                                     freeSolo
+                                    multiple
                                     options={accessories}
                                     getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
-                                    value={brandInput.accessories}
-                                    onChange={handleEnumChangeValue(ListOfValueType.Accessories, setBrandInput)}
+                                    value={brandInput.accessories || []}   
+                                    onChange={handleMultiEnumChangeValue(ListOfValueType.Accessories, setBrandInput)}
                                     filterOptions={(options, params): { label: string; value: number }[] => {
                                         const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
 
