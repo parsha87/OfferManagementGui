@@ -69,7 +69,7 @@ interface InquiryFormData {
     phoneNo: string;
     address: string;
     techicalDetailsMapping: MotorMapping[];
-    uploadedFiles?: File[] | null;
+    uploadedFiles: uploadedFiles[];
 }
 enum ListOfValueType {
     Brand = 'brand',
@@ -83,6 +83,13 @@ enum ListOfValueType {
     StdPaymentTerms = 'stdPaymentTerms',
     City = 'city'
 }
+
+type uploadedFiles = {
+    attachmentId: number;
+    fileObject: File;
+    originalFileName: string;
+};
+
 const InquiryForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -177,7 +184,7 @@ const InquiryForm = () => {
         phoneNo: '',
         address: '',
         techicalDetailsMapping: [],
-        uploadedFiles: null, // ✅ no error now
+        uploadedFiles: [], // ✅ no error now
     });
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
@@ -208,32 +215,32 @@ const InquiryForm = () => {
     const yesNoOptions = ['Yes', 'No'];
     const encoderScopeOptions = ['Customer Scope', 'Manufacturer Scope'];
 
-    // useEffect(() => {
-    //     fetchCustomers();
-    //     fetchListOfValues();
-    //     if (id) {
-    //         api.get(`Inquiry/${id}`).then(res => {
-    //             console.log(res)
-    //             setFormData(res.data)
-    //         });
-    //     }
-    // }, [id]);
-
     useEffect(() => {
         fetchCustomers();
         fetchListOfValues();
-        const fetchInquiry = async () => {
-            try {
-                const res = await api.get(`Inquiry/${id}`);
-                console.log(res);
-                setFormData(res.data);
-            } catch (error) {
-                console.error("Failed to fetch inquiry:", error);
-                // Optionally show a user-friendly error message here
-            }
-        };
-        fetchInquiry();
+        if (id) {
+            api.get(`Inquiry/${id}`).then(res => {
+                console.log(res)
+                setFormData(res.data)
+            });
+        }
     }, [id]);
+
+    // useEffect(() => {
+    //     fetchCustomers();
+    //     fetchListOfValues();
+    //     const fetchInquiry = async () => {
+    //         try {
+    //             const res = await api.get(`Inquiry/${id}`);
+    //             console.log(res);
+    //             setFormData(res.data);
+    //         } catch (error) {
+    //             console.error("Failed to fetch inquiry:", error);
+    //             // Optionally show a user-friendly error message here
+    //         }
+    //     };
+    //     fetchInquiry();
+    // }, [id]);
 
 
     const fetchCustomers = async () => {
@@ -532,8 +539,8 @@ const InquiryForm = () => {
 
             const formDataToSend = new FormData();
             if (uploadedFiles && uploadedFiles.length > 0) {
-                uploadedFiles.forEach((file) => {
-                    formDataToSend.append("files", file); // key can be "files" or "file[]" depending on backend
+                uploadedFiles.forEach((fileWrapper) => {
+                    formDataToSend.append("files", fileWrapper.fileObject); // ✅ send the actual File
                 });
             }
             formDataToSend.append("model", JSON.stringify(modelOnly)); // Add only model data
@@ -561,8 +568,8 @@ const InquiryForm = () => {
 
                 const formDataToSend = new FormData();
                 if (uploadedFiles && uploadedFiles.length > 0) {
-                    uploadedFiles.forEach((file) => {
-                        formDataToSend.append("files", file); // key can be "files" or "file[]" depending on backend
+                    uploadedFiles.forEach((fileWrapper) => {
+                        formDataToSend.append("files", fileWrapper.fileObject); // ✅ send the actual File
                     });
                 }
                 formDataToSend.append("model", JSON.stringify(modelOnly)); // Add only model data
@@ -673,14 +680,62 @@ const InquiryForm = () => {
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
+            const newFiles: uploadedFiles[] = Array.from(files).map(file => ({
+                attachmentId: 0,
+                fileObject: file,
+                originalFileName: file.name,
+            }));
             setFormData((prevData) => ({
                 ...prevData,
-                uploadedFiles: [...(prevData.uploadedFiles || []), ...Array.from(files)],
+                uploadedFiles: [...(prevData.uploadedFiles || []), ...newFiles],
             }));
         }
     };
-    
 
+    // const handleDeleteFile = (file: any) => {
+    //     setFormData((prevData) => ({
+    //         ...prevData,
+    //         uploadedFiles: prevData.uploadedFiles.filter((_, index) => index !== indexToDelete),
+    //     }));
+    // };
+
+    const handleDeleteFile = (file: any) => {
+        api.delete(`Inquiry/deleteFile/${file.attachmentId}`)
+            .then((res) => {
+                console.log("File deleted:", res.data);
+
+                // Remove the deleted file from the uploadedFiles state
+                setFormData((prevData) => ({
+                    ...prevData,
+                    uploadedFiles: prevData.uploadedFiles.filter((uploadedFile) => uploadedFile.attachmentId !== file.attachmentId),
+                }));
+            })
+            .catch((err) => {
+                console.error("Error deleting file:", err);
+            });
+    };
+
+
+    const handleDownloadFile = (file: any) => {
+        // Assuming `file.id` is used to fetch the file from your server
+        api.get(`Inquiry/getFileById/${file.attachmentId}`, { responseType: 'blob' }) // Set responseType to 'blob' for file download
+            .then((res) => {
+                // Create a URL for the file blob
+                const fileURL = URL.createObjectURL(res.data);
+
+                // Create an anchor element and trigger the download
+                const link = document.createElement('a');
+                link.href = fileURL;
+                link.download = file.originalFileName || 'downloaded_file'; // Use the file name or a default
+                link.click();
+
+                // Optionally, revoke the blob URL after download to free up memory
+                URL.revokeObjectURL(fileURL);
+            })
+            .catch((error) => {
+                console.error("Error downloading file:", error);
+            });
+    };
 
 
     const handleSubmitCust = async () => {
@@ -1241,14 +1296,25 @@ const InquiryForm = () => {
                                     <TableHead>
                                         <TableRow>
                                             <TableCell>File Name</TableCell>
-                                            <TableCell>Size (KB)</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {formData.uploadedFiles.map((file, index) => (
                                             <TableRow key={index}>
-                                                <TableCell>{file.name}</TableCell>
-                                                <TableCell>{(file.size / 1024).toFixed(2)}</TableCell>
+                                                <TableCell>{file.originalFileName}</TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        size="small"
+                                                        onClick={() => handleDownloadFile(file)}>
+                                                        Download
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        color="error"
+                                                        onClick={() => handleDeleteFile(file)}>
+                                                        Delete
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
