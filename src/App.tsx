@@ -5,6 +5,8 @@ import { useContext, useEffect } from 'react';
 import { LoaderContext } from './context/LoaderContext';
 import Loader from './pages/Loader';
 import { setLoaderHandler } from './context/AxiosContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function LoaderManager() {
   const { loading, setLoading } = useContext(LoaderContext);
@@ -22,6 +24,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <LoaderManager />
+        <ToastContainer position="top-right" autoClose={3000} />
         <RouterApp />
       </AuthProvider>
     </BrowserRouter>

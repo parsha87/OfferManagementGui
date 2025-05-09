@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, } from '@mui/material';
+import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, TableContainer, } from '@mui/material';
 import { Edit, Delete, NewLabel } from '@mui/icons-material';
 import api from '../context/AxiosContext';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 
 export interface MotorMapping {
@@ -175,7 +176,36 @@ const InquiryForm = () => {
         discount: 0,
         netPriceWithoutGST: 0,
         totalPackage: 0,
-        status: '',
+        status: 'Draft',
+        createdOn: new Date(),
+        createdBy: '',
+        updatedOn: new Date(),
+        updatedBy: '',
+        email: '',
+        phoneNo: '',
+        address: '',
+        techicalDetailsMapping: [],
+        uploadedFiles: [], // ✅ no error now
+    });
+
+    const [formDataAll, setFormDataAll] = useState<InquiryFormData>({
+        inquiryId: 0,
+        customerType: '',
+        customerName: '',
+        customerId: 0,
+        region: '',
+        city: '',
+        enquiryNo: '',
+        enquiryDate: new Date(),
+        rfqNo: '',
+        rfqDate: new Date(),
+        stdPaymentTerms: '',
+        stdIncoTerms: '',
+        listPrice: 0,
+        discount: 0,
+        netPriceWithoutGST: 0,
+        totalPackage: 0,
+        status: 'Draft',
         createdOn: new Date(),
         createdBy: '',
         updatedOn: new Date(),
@@ -211,7 +241,7 @@ const InquiryForm = () => {
     const tempClassOptions = ['T3', 'T4', 'T5', 'T6'];
     const dutyOptions = ['S1', 'S2-15min', 'S2-30min', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'];
     const cdfOptions = ['25%', '40%', '60%', '100%'];
-    const tempRiseOptions = ['Limited to Class F'];
+    const tempRiseOptions = ['Limited to Class B', 'Limited to Class F'];
     const tempRiseOptionsH = ['Limited to Class B', 'Limited to Class F', 'Limited to Class H'];
     const yesNoOptions = ['Yes', 'No'];
     const encoderScopeOptions = ['Customer Scope', 'Manufacturer Scope'];
@@ -223,6 +253,7 @@ const InquiryForm = () => {
             api.get(`Inquiry/${id}`).then(res => {
                 console.log(res)
                 setFormData(res.data)
+                 setFormDataAll(res.data)
             });
         }
     }, [id]);
@@ -407,7 +438,10 @@ const InquiryForm = () => {
     };
 
     const addBrand = () => {
-        if (!brandInput.brand) return; // Don't add if brand is empty
+        if (!brandInput.brand) {
+            toast.error('Enter Brand Name.');
+            return; // Don't add if brand is empty
+        }
 
         if (editIndex !== null) {
             // If editIndex is not null, update the existing row
@@ -466,6 +500,7 @@ const InquiryForm = () => {
             narration: "",
             amount: "",
         });
+        setOpenModal(false);
     };
 
     const handleOpenModal = () => {
@@ -473,38 +508,38 @@ const InquiryForm = () => {
             id: 0,
             inquiryId: 0,
             motorType: "LT",
-        kw: "",
-        hp: "",
-        phase: "Three",
-        pole: "4",
-        frameSize: "",
-        dop: "IP55",
-        insulationClass: "F",
-        efficiency: "IE2",
-        voltage: "415",
-        frequency: "50",
-        quantity: "",
-        mounting: "B3",
-        safeAreaHazardousArea: "Safe Area",
-        brand: "",
-        ifHazardousArea: "",
-        tempClass: "T3",
-        gasGroup: "IIA IIB",
-        zone: "I",
-        hardadousDescription: "",
-        duty: "S1",
-        startsPerHour: "",
-        cdf: "",
-        ambientTemp: "50",
-        tempRise: "Limited to Class F",
-        accessories: [],
-        brake: "",
-        encoderMounting: "",
-        encoderMountingIfYes: "",
-        application: "",
-        segment: "",
-        narration: "",
-        amount: "",
+            kw: "",
+            hp: "",
+            phase: "Three",
+            pole: "4",
+            frameSize: "",
+            dop: "IP55",
+            insulationClass: "F",
+            efficiency: "IE2",
+            voltage: "415",
+            frequency: "50",
+            quantity: "",
+            mounting: "B3",
+            safeAreaHazardousArea: "Safe Area",
+            brand: "",
+            ifHazardousArea: "",
+            tempClass: "T3",
+            gasGroup: "IIA IIB",
+            zone: "I",
+            hardadousDescription: "",
+            duty: "S1",
+            startsPerHour: "",
+            cdf: "",
+            ambientTemp: "50",
+            tempRise: "Limited to Class F",
+            accessories: [],
+            brake: "",
+            encoderMounting: "",
+            encoderMountingIfYes: "",
+            application: "",
+            segment: "",
+            narration: "",
+            amount: "",
         });
         setOpenModal(true);
     };
@@ -559,6 +594,7 @@ const InquiryForm = () => {
                 }
             });
 
+            toast.success('Saved successfully!');
 
             // const response = await api.put('Inquiry', formData);
             // console.log('Response:', response.data);
@@ -586,7 +622,7 @@ const InquiryForm = () => {
                         'Content-Type': 'multipart/form-data'
                     }
                 });
-
+                toast.success('Saved successfully!');
 
                 // const response = await api.put('Inquiry', formData);
                 // console.log('Response:', response.data);
@@ -638,29 +674,29 @@ const InquiryForm = () => {
     const handleMultiEnumChangeValue = (
         type: ListOfValueType,
         setFunction: React.Dispatch<React.SetStateAction<any>>
-      ) => {
+    ) => {
         return async (event: any, newValue: any[]) => {
-          const cleanedValues = await Promise.all(
-            newValue.map(async (item) => {
-              if (typeof item === 'string') {
-                await handleEnumChange(type, item.trim());
-                return item.trim();
-              } else if (item.inputValue) {
-                const val = item.inputValue.trim();
-                await handleEnumChange(type, val);
-                return val;
-              } else {
-                return item.label;
-              }
-            })
-          );
-      
-          setFunction((prev: any) => ({
-            ...prev,
-            [type]: cleanedValues
-          }));
+            const cleanedValues = await Promise.all(
+                newValue.map(async (item) => {
+                    if (typeof item === 'string') {
+                        await handleEnumChange(type, item.trim());
+                        return item.trim();
+                    } else if (item.inputValue) {
+                        const val = item.inputValue.trim();
+                        await handleEnumChange(type, val);
+                        return val;
+                    } else {
+                        return item.label;
+                    }
+                })
+            );
+
+            setFunction((prev: any) => ({
+                ...prev,
+                [type]: cleanedValues
+            }));
         };
-      };
+    };
     const handleEnumChangeValue = (type: ListOfValueType, setFunction: React.Dispatch<React.SetStateAction<any>>) => {
         return async (event: any, newValue: any) => {
 
@@ -799,12 +835,12 @@ const InquiryForm = () => {
         }
     };
     return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-                Inquiry Form
-            </Typography>
+        <Box sx={{ p: 0 }}>
             <Card sx={{ mt: '6px' }}>
                 <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                        Inquiry Form
+                    </Typography>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
@@ -1046,7 +1082,7 @@ const InquiryForm = () => {
                     </Grid>
                 </CardContent>
             </Card>
-            <Card sx={{ width: '1580px', mt: '6px' }}>
+            <Card sx={{ mt: '6px' }}>
                 <CardContent>
                     <Grid container spacing={2}>
                         {/* Brand Mapping Section */}
@@ -1064,103 +1100,106 @@ const InquiryForm = () => {
                             </Box>
 
                             {formData.techicalDetailsMapping.length > 0 && (
-                                <Box mt={3} sx={{ overflowX: 'auto' }}>
-                                    <Box sx={{ minWidth: 1000 }}>
-                                        <Table stickyHeader size="small" sx={{ minWidth: 1000 }}>
-                                            <TableHead>
-                                                <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
-                                                    <TableCell>Motor Type</TableCell>
-                                                    <TableCell>KW</TableCell>
-                                                    <TableCell>HP</TableCell>
-                                                    <TableCell>Phase</TableCell>
-                                                    <TableCell>Pole</TableCell>
-                                                    <TableCell>Frame Size</TableCell>
-                                                    <TableCell>DOP</TableCell>
-                                                    <TableCell>Insu. Class</TableCell>
-                                                    <TableCell>Efficiency</TableCell>
-                                                    <TableCell>Voltage</TableCell>
-                                                    <TableCell>Frequency</TableCell>
-                                                    <TableCell>Qty</TableCell>
-                                                    <TableCell>Mounting</TableCell>
-                                                    <TableCell>Safe/Hazardous</TableCell>
-                                                    <TableCell>Brand</TableCell>
-                                                    <TableCell>Zone</TableCell>
-                                                    <TableCell>Temp Class</TableCell>
-                                                    <TableCell>Gas Group</TableCell>
-                                                    <TableCell>Hazardous Desc</TableCell>
-                                                    <TableCell>Duty</TableCell>
-                                                    <TableCell>StartsPerHour</TableCell>
-                                                    <TableCell>Cdf</TableCell>
-                                                    <TableCell>AmbientTemp</TableCell>
-                                                    <TableCell>TempRise</TableCell>
-                                                    <TableCell>Accessories</TableCell>
-                                                    <TableCell>Brake</TableCell>
-                                                    <TableCell>EncoderMounting</TableCell>
-                                                    <TableCell>EncoderMountingIfYes</TableCell>
-                                                    <TableCell>Application</TableCell>
-                                                    <TableCell>Segment</TableCell>
-                                                    <TableCell>Amount</TableCell>
-                                                    <TableCell>Narration</TableCell>
-                                                    <TableCell>Action</TableCell>
+                                <TableContainer sx={{
+                                    maxHeight: 300,
+                                    width: '100%',
+                                    overflow: 'auto',
+                                    display: 'block'
+                                }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
+                                                <TableCell>Action</TableCell>
+                                                <TableCell>Motor Type</TableCell>
+                                                <TableCell>KW</TableCell>
+                                                <TableCell>HP</TableCell>
+                                                <TableCell>Phase</TableCell>
+                                                <TableCell>Pole</TableCell>
+                                                <TableCell>Frame Size</TableCell>
+                                                <TableCell>DOP</TableCell>
+                                                <TableCell>Insu. Class</TableCell>
+                                                <TableCell>Efficiency</TableCell>
+                                                <TableCell>Voltage</TableCell>
+                                                <TableCell>Frequency</TableCell>
+                                                <TableCell>Qty</TableCell>
+                                                <TableCell>Mounting</TableCell>
+                                                <TableCell>Safe/Hazardous</TableCell>
+                                                <TableCell>Brand</TableCell>
+                                                <TableCell>Zone</TableCell>
+                                                <TableCell>Temp Class</TableCell>
+                                                <TableCell>Gas Group</TableCell>
+                                                <TableCell>Hazardous Desc</TableCell>
+                                                <TableCell>Duty</TableCell>
+                                                <TableCell>StartsPerHour</TableCell>
+                                                <TableCell>Cdf</TableCell>
+                                                <TableCell>AmbientTemp</TableCell>
+                                                <TableCell>TempRise</TableCell>
+                                                <TableCell>Accessories</TableCell>
+                                                <TableCell>Brake</TableCell>
+                                                <TableCell>EncoderMounting</TableCell>
+                                                <TableCell>EncoderMountingIfYes</TableCell>
+                                                <TableCell>Application</TableCell>
+                                                <TableCell>Segment</TableCell>
+                                                <TableCell>Amount</TableCell>
+                                                <TableCell>Narration</TableCell>
+
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {formData.techicalDetailsMapping.map((brand, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell>
+                                                        <Button
+                                                            color="primary"
+                                                            onClick={() => handleEditBrand(index)}
+                                                            startIcon={<Edit />}
+                                                        >
+                                                        </Button>
+                                                        <Button
+                                                            color="secondary"
+                                                            onClick={() => handleDeleteDialogOpen(index)}
+                                                            startIcon={<Delete />}
+                                                        >
+                                                        </Button>
+                                                    </TableCell>
+                                                    <TableCell>{brand.motorType}</TableCell>
+                                                    <TableCell>{brand.kw}</TableCell>
+                                                    <TableCell>{brand.hp}</TableCell>
+                                                    <TableCell>{brand.phase}</TableCell>
+                                                    <TableCell>{brand.pole}</TableCell>
+                                                    <TableCell>{brand.frameSize}</TableCell>
+                                                    <TableCell>{brand.dop}</TableCell>
+                                                    <TableCell>{brand.insulationClass}</TableCell>
+                                                    <TableCell>{brand.efficiency}</TableCell>
+                                                    <TableCell>{brand.voltage}</TableCell>
+                                                    <TableCell>{brand.frequency}</TableCell>
+                                                    <TableCell>{brand.quantity}</TableCell>
+                                                    <TableCell>{brand.mounting}</TableCell>
+                                                    <TableCell>{brand.safeAreaHazardousArea}</TableCell>
+                                                    <TableCell>{brand.brand}</TableCell>
+                                                    <TableCell>{brand.zone}</TableCell>
+                                                    <TableCell>{brand.tempClass}</TableCell>
+                                                    <TableCell>{brand.gasGroup}</TableCell>
+                                                    <TableCell>{brand.hardadousDescription}</TableCell>
+                                                    <TableCell>{brand.duty}</TableCell>
+                                                    <TableCell>{brand.startsPerHour}</TableCell>
+                                                    <TableCell>{brand.cdf}</TableCell>
+                                                    <TableCell>{brand.ambientTemp}</TableCell>
+                                                    <TableCell>{brand.tempRise}</TableCell>
+                                                    <TableCell>{brand.accessories}</TableCell>
+                                                    <TableCell>{brand.brake}</TableCell>
+                                                    <TableCell>{brand.encoderMounting}</TableCell>
+                                                    <TableCell>{brand.encoderMountingIfYes}</TableCell>
+                                                    <TableCell>{brand.application}</TableCell>
+                                                    <TableCell>{brand.segment}</TableCell>
+                                                    <TableCell>{brand.amount}</TableCell>
+                                                    <TableCell>{brand.narration}</TableCell>
+
                                                 </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {formData.techicalDetailsMapping.map((brand, index) => (
-                                                    <TableRow key={index}>
-                                                        <TableCell>{brand.motorType}</TableCell>
-                                                        <TableCell>{brand.kw}</TableCell>
-                                                        <TableCell>{brand.hp}</TableCell>
-                                                        <TableCell>{brand.phase}</TableCell>
-                                                        <TableCell>{brand.pole}</TableCell>
-                                                        <TableCell>{brand.frameSize}</TableCell>
-                                                        <TableCell>{brand.dop}</TableCell>
-                                                        <TableCell>{brand.insulationClass}</TableCell>
-                                                        <TableCell>{brand.efficiency}</TableCell>
-                                                        <TableCell>{brand.voltage}</TableCell>
-                                                        <TableCell>{brand.frequency}</TableCell>
-                                                        <TableCell>{brand.quantity}</TableCell>
-                                                        <TableCell>{brand.mounting}</TableCell>
-                                                        <TableCell>{brand.safeAreaHazardousArea}</TableCell>
-                                                        <TableCell>{brand.brand}</TableCell>
-                                                        <TableCell>{brand.zone}</TableCell>
-                                                        <TableCell>{brand.tempClass}</TableCell>
-                                                        <TableCell>{brand.gasGroup}</TableCell>
-                                                        <TableCell>{brand.hardadousDescription}</TableCell>
-                                                        <TableCell>{brand.duty}</TableCell>
-                                                        <TableCell>{brand.startsPerHour}</TableCell>
-                                                        <TableCell>{brand.cdf}</TableCell>
-                                                        <TableCell>{brand.ambientTemp}</TableCell>
-                                                        <TableCell>{brand.tempRise}</TableCell>
-                                                        <TableCell>{brand.accessories}</TableCell>
-                                                        <TableCell>{brand.brake}</TableCell>
-                                                        <TableCell>{brand.encoderMounting}</TableCell>
-                                                        <TableCell>{brand.encoderMountingIfYes}</TableCell>
-                                                        <TableCell>{brand.application}</TableCell>
-                                                        <TableCell>{brand.segment}</TableCell>
-                                                        <TableCell>{brand.amount}</TableCell>
-                                                        <TableCell>{brand.narration}</TableCell>
-                                                        <TableCell>
-                                                            <Button
-                                                                color="primary"
-                                                                onClick={() => handleEditBrand(index)}
-                                                                startIcon={<Edit />}
-                                                            >
-                                                                Edit
-                                                            </Button>
-                                                            <Button
-                                                                color="secondary"
-                                                                onClick={() => handleDeleteDialogOpen(index)}
-                                                                startIcon={<Delete />}
-                                                            >
-                                                                Delete
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </Box>
-                                </Box>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
                             )}
 
                         </Grid>
@@ -1180,7 +1219,7 @@ const InquiryForm = () => {
                     <Grid container spacing={2}>
 
                         {/* Standard Payment Terms */}
-                        <Grid size={{ xs: 12, sm: 4 }} >
+                        <Grid size={{ xs: 12, sm: 3 }} >
                             <Autocomplete
                                 freeSolo
                                 options={stdPaymentTerms}
@@ -1242,7 +1281,7 @@ const InquiryForm = () => {
                                 )}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }} >
+                        <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
                                 label="Std Inco Terms"
@@ -1251,51 +1290,53 @@ const InquiryForm = () => {
                                 onChange={handleChange}
                             />
                         </Grid>
-                        {/* Pricing Section */}
-                        <Grid container spacing={2} sx={{ mt: 3 }}>
-                            <Grid size={{ xs: 12, sm: 3 }} >
-                                <TextField
-                                    fullWidth
-                                    label="List Price"
-                                    name="listPrice"
-                                    type="number"
-                                    value={formData.listPrice}
-                                    onChange={handleChange}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 3 }} >
-                                <TextField
-                                    fullWidth
-                                    label="Discount"
-                                    name="discount"
-                                    type="number"
-                                    value={formData.discount}
-                                    onChange={handleChange}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 3 }} >
-                                <TextField
-                                    fullWidth
-                                    label="Net Price (without GST)"
-                                    name="netPriceWithoutGST"
-                                    type="number"
-                                    value={formData.netPriceWithoutGST}
-                                    onChange={handleChange}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 3 }} >
-                                <TextField
-                                    fullWidth
-                                    label="Total Package"
-                                    name="totalPackage"
-                                    type="number"
-                                    value={formData.totalPackage}
-                                    onChange={handleChange}
-                                />
-                            </Grid>
+                    </Grid>
+                    {/* Pricing Section */}
+                    <Grid container spacing={2} sx={{ mt: 3 }}>
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <TextField
+                                fullWidth
+                                label="List Price"
+                                name="listPrice"
+                                type="number"
+                                value={formData.listPrice}
+                                onChange={handleChange}
+                            />
                         </Grid>
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <TextField
+                                fullWidth
+                                label="Discount"
+                                name="discount"
+                                type="number"
+                                value={formData.discount}
+                                onChange={handleChange}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <TextField
+                                fullWidth
+                                label="Net Price (without GST)"
+                                name="netPriceWithoutGST"
+                                type="number"
+                                value={formData.netPriceWithoutGST}
+                                onChange={handleChange}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <TextField
+                                fullWidth
+                                label="Total Package"
+                                name="totalPackage"
+                                type="number"
+                                value={formData.totalPackage}
+                                onChange={handleChange}
+                            />
+                        </Grid>
+                    </Grid>
 
-                    </Grid></CardContent></Card>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardContent>
@@ -1310,7 +1351,7 @@ const InquiryForm = () => {
                             <Button
                                 variant="contained"
                                 component="label"
-                                
+
                             >
                                 Choose Files
                                 <input
@@ -1448,7 +1489,10 @@ const InquiryForm = () => {
                 fullWidth
                 maxWidth="lg" // options: 'xs', 'sm', 'md', 'lg', 'xl'
             >
-                <DialogTitle>Technical Details</DialogTitle>
+                <DialogTitle sx={{
+                    background: 'linear-gradient(to right,rgb(21, 129, 218), #21cbf3)',
+                    color: 'white',
+                }}>Technical Details</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2} sx={{ mt: 1, mb: 2 }}>
                         <Grid size={{ xs: 12, sm: 4 }} >
@@ -1727,7 +1771,7 @@ const InquiryForm = () => {
                                 />
                             </Grid>
                             {/* Starts per Hour */}
-                            {(brandInput.duty === 'S2-15min' || brandInput.duty === 'S2-30min') && (<Grid size={{ xs: 12, sm: 4 }} >
+                            {(brandInput.duty !== 'S1' && brandInput.duty !== 'S3' && brandInput.duty !== 'S2-15min' && brandInput.duty !== 'S2-30min') && (<Grid size={{ xs: 12, sm: 4 }} >
                                 <Autocomplete
                                     freeSolo
                                     options={startsPerHour}
@@ -1753,7 +1797,7 @@ const InquiryForm = () => {
                                 />
                             </Grid>)}
                             {/* CDF */}
-                            {(brandInput.duty === 'S2-15min' || brandInput.duty === 'S2-30min') && (<Grid size={{ xs: 12, sm: 4 }} >
+                            {(brandInput.duty !== 'S1' && brandInput.duty !== 'S3' && brandInput.duty !== 'S2-15min' && brandInput.duty !== 'S2-30min') && (<Grid size={{ xs: 12, sm: 4 }} >
                                 <CustomSelect
                                     label="CDF"
                                     name="cdf"
@@ -1819,7 +1863,7 @@ const InquiryForm = () => {
                                     multiple
                                     options={accessories}
                                     getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
-                                    value={brandInput.accessories || []}   
+                                    value={brandInput.accessories || []}
                                     onChange={handleMultiEnumChangeValue(ListOfValueType.Accessories, setBrandInput)}
                                     filterOptions={(options, params): { label: string; value: number }[] => {
                                         const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
@@ -1929,17 +1973,17 @@ const InquiryForm = () => {
                                     )}
                                 />
                             </Grid>
+                            <Grid size={{ xs: 12, sm: 4 }} >
+                                <TextField
+                                    fullWidth
+                                    label="Amount"
+                                    name="amount"
+                                    value={brandInput.amount}
+                                    onChange={handleBrandChange}
+                                />
+                            </Grid>
+                        </Grid>
 
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }} >
-                            <TextField
-                                fullWidth
-                                label="Amount"
-                                name="amount"
-                                value={brandInput.amount}
-                                onChange={handleBrandChange}
-                            />
-                        </Grid>
                         <Grid size={{ xs: 12 }} >
                             <TextField
                                 fullWidth
