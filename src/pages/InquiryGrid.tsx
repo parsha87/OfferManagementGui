@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Button, Stack, Box, Modal, Typography, DialogActions, DialogTitle, Dialog, DialogContent, DialogContentText, IconButton } from '@mui/material';
+import { Button, Stack, Box, Modal, Typography, DialogActions, DialogTitle, Dialog, DialogContent, DialogContentText, IconButton, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import api from '../context/AxiosContext';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from './ConfirmDialog';
@@ -17,6 +17,7 @@ import jsPDF from 'jspdf';
 const InquiryGrid = () => {
   const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
+  const [rowsAll, setRowsAll] = useState<any[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -24,16 +25,40 @@ const InquiryGrid = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedInquiryId, setSelectedInquiryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [regionFilter, setRegionFilter] = useState('');
+  const [customerNameFilter, setCustomerNameFilter] = useState('');
+  const [customerTypeFilter, setCustomerTypeFilter] = useState('');
+  const statusOptions = ['Draft', 'Offer Sent', 'Approved', 'Closed'];
+  const regionOptions = ['North', 'South', 'East', 'West'];
+  const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]); // Use useState to store the options
+  const [customerTypeOptions, setCustomerTypeOptions] = useState<string[]>([]); // Use useState to store the options
+
+
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    applyFilters();
+  }, [statusFilter, regionFilter, customerNameFilter, customerTypeFilter, rowsAll]);
+
+
   const fetchData = async () => {
     setLoading(true);
     try {
       const response = await api.get('Inquiry');
-      setRows(response.data);
+      // Use a type assertion to tell TypeScript that response.data is an array of objects
+      const uniqueCustomerNames = [
+        ...new Set((response.data as { customerName: string }[]).map((row) => row.customerName)),
+      ];
+      setCustomerNameOptions(uniqueCustomerNames); // Use setCustomerNameOptions to update the options
+      const uniqueCustomerTypes = [
+        ...new Set((response.data as { customerType: string }[]).map((row) => row.customerType)),
+      ];
+      setCustomerTypeOptions(uniqueCustomerTypes); // Use setCustomerNameOptions to update the options
+      setRowsAll(response.data);
     } catch (error) {
       console.error('Error fetching inquiries:', error);
     } finally {
@@ -46,6 +71,47 @@ const InquiryGrid = () => {
     navigate('/inquiries/edit/' + id)
   };
 
+  const applyFilters = () => {
+    let filtered = [...rowsAll]; // Start with all rows.
+
+    // Apply filters based on the selected criteria
+    if (statusFilter) filtered = filtered.filter(r => r.status === statusFilter);
+    if (regionFilter) filtered = filtered.filter(r => r.region === regionFilter);
+    if (customerNameFilter) filtered = filtered.filter(r => r.customerName === customerNameFilter);
+    if (customerTypeFilter) filtered = filtered.filter(r => r.customerType === customerTypeFilter);
+
+    setRows(filtered); // Update the rows with the filtered data.
+  };
+
+  // Make sure to call applyFilters whenever a filter changes:
+  const handleStatusChange = (e: SelectChangeEvent) => {
+    setStatusFilter(e.target.value); // Update the filter value.
+    applyFilters(); // Apply the filter immediately after changing the value.
+  };
+
+  const handleRegionChange = (e: SelectChangeEvent) => {
+    setRegionFilter(e.target.value); // Update the filter value.
+    applyFilters(); // Apply the filter immediately after changing the value.
+  };
+
+  const customerNameChange = (e: SelectChangeEvent) => {
+    setCustomerNameFilter(e.target.value); // Update the filter value.
+    applyFilters(); // Apply the filter immediately after changing the value.
+  };
+
+  const customerTypeChange = (e: SelectChangeEvent) => {
+    setCustomerTypeFilter(e.target.value); // Update the filter value.
+    applyFilters(); // Apply the filter immediately after changing the value.
+  };
+
+
+  const resetFilters = () => {
+    setStatusFilter('');
+    setRegionFilter('');
+    setCustomerNameFilter('');
+    setCustomerTypeFilter('');
+    setRows(rowsAll); // reset table data to original
+  };
 
   const handleDelete = async (id: number) => {
     setDeleteId(id);
@@ -161,7 +227,7 @@ const InquiryGrid = () => {
       autoTable(doc, {
         startY: 30,
         head: [techColumns.map(col => col.header)],
-        body: formData.techicalDetailsMapping.map((detail:any) =>
+        body: formData.techicalDetailsMapping.map((detail: any) =>
           techColumns.map(col => detail[col.dataKey])
         ),
         margin: { left: margin }
@@ -303,9 +369,80 @@ const InquiryGrid = () => {
     <Box mt={3}>
       {/* Top bar with Add button */}
       <Box display="flex" justifyContent="flex-start" mb={2}>
+        {/* Add Button */}
         <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}
         >
           Add Inquiry
+        </Button>
+
+        <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}>
+          {/* Filters */}
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel shrink>Customer Type</InputLabel>
+            <Select
+              value={regionFilter}
+              onChange={customerTypeChange}
+              displayEmpty
+              renderValue={(selected) => selected === "" ? "All" : selected}             >
+              <MenuItem value="">All</MenuItem>
+              {customerTypeOptions.map((customerType) => (
+                <MenuItem key={customerType} value={customerType}>
+                  {customerType}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel shrink>Region</InputLabel>
+            <Select
+              value={regionFilter}
+              onChange={handleRegionChange}
+              displayEmpty
+              renderValue={(selected) => selected === "" ? "All" : selected}             >
+              <MenuItem value="">All</MenuItem>
+              {regionOptions.map((region) => (
+                <MenuItem key={region} value={region}>
+                  {region}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel shrink>Customer Name</InputLabel>
+            <Select
+              value={customerNameFilter}
+              onChange={customerNameChange}
+              displayEmpty
+              renderValue={(selected) => selected === "" ? "All" : selected}            >
+              <MenuItem value="">All</MenuItem>
+              {customerNameOptions.map((customerName) => (
+                <MenuItem key={customerName} value={customerName}>
+                  {customerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel shrink>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              onChange={handleStatusChange}
+              displayEmpty
+              renderValue={(selected) => selected === "" ? "All" : selected}             >
+              <MenuItem value="">All</MenuItem>
+              {statusOptions.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}></Box>
+        <Button variant="contained" color="primary" onClick={resetFilters}>
+          Reset Filters
         </Button>
       </Box>
       {/* Scrollable wrapper for table */}
@@ -315,12 +452,13 @@ const InquiryGrid = () => {
             rows={rows}
             columns={inquiryColumns}
             getRowId={(row) => row.inquiryId}
-            autoHeight
             paginationModel={{ pageSize: 10, page: 0 }}
             pageSizeOptions={[10, 20, 50]}
             loading={loading} // 🔥 this enables the DataGrid's built-in loading UI
           />
         </Box>
+
+
       </Box>
 
       {/* Modal for Technical Details */}
