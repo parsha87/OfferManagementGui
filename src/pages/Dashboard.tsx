@@ -52,44 +52,42 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="p-6 grid grid-cols-12 gap-6">
-    <div className="shadow-lg p-4 rounded-xl bg-white col-span-6">
-      <h2 className="text-xl font-bold mb-4">Inquiry Status</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={statusData}>
-          <XAxis dataKey="name" />
-          <YAxis allowDecimals={false} />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="value" fill="#0088FE" />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="shadow-lg p-4 rounded-xl bg-white">
+        <h2 className="text-xl font-bold mb-4">Inquiry Status</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={statusData}>
+            <XAxis dataKey="name" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="value" fill="#0088FE" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="shadow-lg p-4 rounded-xl bg-white">
+        <h2 className="text-xl font-bold mb-4">Customer Type</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={customerTypeData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+            >
+              {customerTypeData.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Legend />
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     </div>
-  
-    <div className="shadow-lg p-4 rounded-xl bg-white col-span-6">
-      <h2 className="text-xl font-bold mb-4">Customer Type</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={customerTypeData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            label
-          >
-            {customerTypeData.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Legend />
-          <Tooltip />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  </div>
-  
   );
 };
 
