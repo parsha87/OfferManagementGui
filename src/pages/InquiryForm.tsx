@@ -219,7 +219,7 @@ const InquiryForm = () => {
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
 
-    const customerTypeOptions = ['Import', 'Export'];
+    const customerTypeOptions = ['Domestic', 'Export'];
     // Define the motor type options
     const motorTypeOptions = ['LT', 'HT'];
     const regionOptions = ['North', 'South', 'East', 'West'];
