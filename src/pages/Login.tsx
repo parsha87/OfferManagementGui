@@ -53,7 +53,7 @@ const Login = () => {
       const response = await axios.post(`${config.apiUrl}Auth/login`, {
         email: username,
         password,
-      }); 
+      });
       const { token, name } = response.data;
 
       // Save token to sessionStorage
@@ -64,8 +64,13 @@ const Login = () => {
 
       // Navigate to dashboard
       navigate('/dashboard');
-    } catch (err) {
-      setError('Invalid credentials. Please try again.');
+    } catch (err : any) {
+      if (err.response?.status === 401) {
+        setError(err.response.data.message || "Invalid credentials. Please try again.");
+      }
+      else {
+        setError('Invalid credentials. Please try again.');
+      }
     }
   };
 

@@ -35,8 +35,32 @@ const UserGrid = () => {
     }
   };
 
+
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 220, hideable: true }, // hidden but accessible
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 150,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => {
+        const handleDelete = () => {
+          // deleteUser(params.id); // or params.row.id depending on your API shape
+        };
+
+        return (
+          <Stack direction="row" spacing={1}>
+            <IconButton onClick={() => navigate(`/users/edit/${params.id}`)}>
+              <Edit />
+            </IconButton>
+            <IconButton color="error" onClick={handleDelete}>
+              <Delete />
+            </IconButton>
+          </Stack>
+        );
+      }
+    },
+    { field: 'id', headerName: 'ID', width: 220, hideable: true },
     { field: 'userName', headerName: 'Username', width: 150 },
     { field: 'firstName', headerName: 'First Name', width: 150 },
     { field: 'lastName', headerName: 'Last Name', width: 150 },
@@ -55,41 +79,24 @@ const UserGrid = () => {
       )
     },
     {
-      field: 'roles',
+      field: 'role',
       headerName: 'Roles',
       width: 200,
       renderCell: (params) => (
-        <Chip label={params.value} size="small" /> // Join the roles array to display them
+        <Chip label={Array.isArray(params.value) ? params.value.join(', ') : params.value} size="small" />
       )
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 150,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        const navigate = useNavigate();
-        const handleDelete = () => {
-          // deleteUser(params.row.id)
-        };
+    
 
-        return (
-          <Stack direction="row" spacing={1}>
-            <IconButton onClick={() => navigate(`/users/edit/${params.row.id}`)}><Edit /></IconButton>
-            <IconButton color="error" onClick={handleDelete}><Delete /></IconButton>
-          </Stack>
-        );
-      }
-    }
   ];
+
 
   return (
     <div style={{ height: 500, width: '100%' }}>
       <Button variant="contained" onClick={() => navigate('/users/new')} style={{ marginBottom: '10px' }}>
         Add User
       </Button>
-      <DataGrid rows={users} columns={columns} getRowId={(row) => row.id} loading={loading}/>
+      <DataGrid rows={users} columns={columns} getRowId={(row) => row.id} loading={loading} />
     </div>
   );
 };
