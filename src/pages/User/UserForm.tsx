@@ -180,7 +180,7 @@ const UserForm = () => {
                                 >
                                     <MenuItem value="Admin">Admin</MenuItem>
                                     <MenuItem value="User">User</MenuItem>
-                                    <MenuItem value="SuperAdmin">SuperAdmin</MenuItem>
+                                    {/* <MenuItem value="SuperAdmin">SuperAdmin</MenuItem> */}
                                 </Select>
                                 {errors.role && <FormHelperText>{errors.role}</FormHelperText>}
                             </FormControl>
