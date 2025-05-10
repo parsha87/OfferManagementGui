@@ -253,7 +253,7 @@ const InquiryForm = () => {
             api.get(`Inquiry/${id}`).then(res => {
                 console.log(res)
                 setFormData(res.data)
-                 setFormDataAll(res.data)
+                setFormDataAll(res.data)
             });
         }
     }, [id]);
@@ -444,22 +444,38 @@ const InquiryForm = () => {
         }
 
         if (editIndex !== null) {
+
             // If editIndex is not null, update the existing row
             setFormData((prevData: any) => {
                 const updatedBrandMapping = [...prevData.techicalDetailsMapping];
                 updatedBrandMapping[editIndex] = { ...brandInput }; // Update the specific row
+                const totalPackages = updatedBrandMapping.reduce(
+                    (sum, item) => sum + (Number(item.quantity) * Number(item.ammount || item.amount || 0)),
+                    0
+                );
                 return {
                     ...prevData,
                     techicalDetailsMapping: updatedBrandMapping,
+                    totalPackage: totalPackages
                 };
             });
             setEditIndex(null); // Reset edit index after updating
         } else {
             // If editIndex is null, add a new row
-            setFormData((prevData: any) => ({
-                ...prevData,
-                techicalDetailsMapping: [...prevData.techicalDetailsMapping, { ...brandInput }],
-            }));
+            setFormData((prevData: any) => {
+                const updatedBrandMapping = [...prevData.techicalDetailsMapping, { ...brandInput }];
+
+                const totalPackages = updatedBrandMapping.reduce(
+                    (sum, item) => sum + (Number(item.quantity) * Number(item.ammount || item.amount || 0)),
+                    0
+                );
+
+                return {
+                    ...prevData,
+                    techicalDetailsMapping: updatedBrandMapping,
+                    totalPackage: totalPackages
+                };
+            });
         }
 
         // Reset the brandInput form after adding or updating
@@ -572,7 +588,6 @@ const InquiryForm = () => {
     const handleSubmit = async () => {
         console.log('Submitted:', formData);
         if (id) {
-
 
             // Destructure to exclude 'uploadedFiles'
             const { uploadedFiles, ...modelOnly } = formData;
@@ -1141,6 +1156,7 @@ const InquiryForm = () => {
                                                 <TableCell>Application</TableCell>
                                                 <TableCell>Segment</TableCell>
                                                 <TableCell>Amount</TableCell>
+                                                <TableCell>Total Amt</TableCell>
                                                 <TableCell>Narration</TableCell>
 
                                             </TableRow>
@@ -1193,6 +1209,7 @@ const InquiryForm = () => {
                                                     <TableCell>{brand.application}</TableCell>
                                                     <TableCell>{brand.segment}</TableCell>
                                                     <TableCell>{brand.amount}</TableCell>
+                                                    <TableCell>{+brand.amount * +brand.quantity}</TableCell>
                                                     <TableCell>{brand.narration}</TableCell>
 
                                                 </TableRow>
@@ -1313,7 +1330,7 @@ const InquiryForm = () => {
                                 onChange={handleChange}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 3 }} >
+                        {/* <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
                                 label="Net Price (without GST)"
@@ -1322,7 +1339,7 @@ const InquiryForm = () => {
                                 value={formData.netPriceWithoutGST}
                                 onChange={handleChange}
                             />
-                        </Grid>
+                        </Grid> */}
                         <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
