@@ -275,7 +275,7 @@ const InquiryGrid = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 250,
+      width: 150,
       sortable: false,
       renderCell: (params: GridRenderCellParams<any>) => (
         <Stack direction="row" spacing={1}>
@@ -300,8 +300,7 @@ const InquiryGrid = () => {
           >
             <VisibilityIcon />
           </IconButton>
-
-          <IconButton
+          {/* <IconButton
             color="info"
             size="small"
             onClick={handleExportExcel}
@@ -315,31 +314,73 @@ const InquiryGrid = () => {
             onClick={() => handleExportPDF(params.row)}
           >
             <PictureAsPdfIcon />
-          </IconButton>
+          </IconButton> */}
         </Stack>
       ),
     },
     // { field: 'inquiryId', headerName: 'Inquiry ID', width: 120 },
     { field: 'customerType', headerName: 'Customer Type', width: 150 },
     { field: 'customerName', headerName: 'Customer Name', width: 180 },
-    { field: 'region', headerName: 'Region', width: 120 },
-    { field: 'city', headerName: 'City', width: 120 },
     { field: 'enquiryNo', headerName: 'Enquiry No', width: 150 },
-    { field: 'enquiryDate', headerName: 'Enquiry Date', width: 150 },
+    {
+      field: 'enquiryDate',
+      headerName: 'Enquiry Date',
+      width: 150,
+      valueFormatter: (params) => {
+        const date = new Date(params);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      },
+    },
     { field: 'rfqNo', headerName: 'RFQ No', width: 150 },
-    { field: 'rfqDate', headerName: 'RFQ Date', width: 150 },
-    { field: 'stdPaymentTerms', headerName: 'Payment Terms', width: 150 },
-    { field: 'stdIncoTerms', headerName: 'Inco Terms', width: 150 },
-    { field: 'listPrice', headerName: 'List Price', width: 120 },
+    {
+      field: 'rfqDate',
+      headerName: 'RFQ Date',
+      width: 150,
+      valueFormatter: (params) => {
+        const date = new Date(params);
+        if (isNaN(date.getTime())) return ''; // handle invalid date
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      },
+    },
+    {
+      field: 'listPrice',
+      headerName: 'List Price',
+      width: 120,
+      valueFormatter: (params) => {
+        const value = Number(params);
+        return isNaN(value)
+          ? ''
+          : value.toLocaleString('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 2,
+          });
+      },
+    },
     { field: 'discount', headerName: 'Discount', width: 120 },
-    { field: 'netPriceWithoutGST', headerName: 'Net Price (no GST)', width: 150 },
-    { field: 'totalPackage', headerName: 'Total Package', width: 150 },
+    {
+      field: 'totalPackage',
+      headerName: 'Total Package',
+      width: 150,
+      valueFormatter: (params) => {
+        const value = Number(params);
+        return isNaN(value)
+          ? ''
+          : value.toLocaleString('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 2,
+          });
+      },
+    },
     { field: 'status', headerName: 'Status', width: 120 },
-    { field: 'createdBy', headerName: 'Created By', width: 150 },
-    { field: 'createdOn', headerName: 'Created On', width: 150 },
-    { field: 'updatedBy', headerName: 'Updated By', width: 150 },
-    { field: 'updatedOn', headerName: 'Updated On', width: 150 },
-
+    { field: 'offerStatus', headerName: 'Offer Status', width: 120 }
   ];
 
   const technicalDetailsColumns: GridColDef[] = [
