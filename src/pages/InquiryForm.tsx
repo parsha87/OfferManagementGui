@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, TableContainer, } from '@mui/material';
+import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, TableContainer, InputAdornment, } from '@mui/material';
 import { Edit, Delete, NewLabel } from '@mui/icons-material';
 import api from '../context/AxiosContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import SectionHeader from './SectionHeader';
 
 
 export interface MotorMapping {
@@ -42,6 +43,7 @@ export interface MotorMapping {
     segment: string
     narration: string;
     amount: string;
+    deliveryTime: string;
 }
 
 interface InquiryFormData {
@@ -51,6 +53,11 @@ interface InquiryFormData {
     customerId: number;
     region: string;
     city: string;
+    state: string;
+    country: string;
+    salutation: string;
+    cpfirstName: string;
+    cplastName: string;
     enquiryNo: string;
     enquiryDate: Date;
     rfqNo: string;
@@ -62,13 +69,14 @@ interface InquiryFormData {
     netPriceWithoutGST: number;
     totalPackage: number;
     status: string;
+    offerStatus: string;
     createdOn: Date;
     createdBy: string;
     updatedOn: Date;
     updatedBy: string;
-    email: string;
-    phoneNo: string;
-    address: string;
+    custPhoneNo: string;
+    custAddress: string;
+    custEmail: string;
     techicalDetailsMapping: MotorMapping[];
     uploadedFiles: uploadedFiles[];
 }
@@ -157,6 +165,7 @@ const InquiryForm = () => {
         segment: "",
         narration: "",
         amount: "",
+        deliveryTime: ''
     });
 
     const [formData, setFormData] = useState<InquiryFormData>({
@@ -166,6 +175,11 @@ const InquiryForm = () => {
         customerId: 0,
         region: '',
         city: '',
+        state: '',
+        country: '',
+        salutation: '',
+        cpfirstName: '',
+        cplastName: '',
         enquiryNo: '',
         enquiryDate: new Date(),
         rfqNo: '',
@@ -177,13 +191,14 @@ const InquiryForm = () => {
         netPriceWithoutGST: 0,
         totalPackage: 0,
         status: 'Draft',
+        offerStatus: '',
         createdOn: new Date(),
         createdBy: '',
         updatedOn: new Date(),
         updatedBy: '',
-        email: '',
-        phoneNo: '',
-        address: '',
+        custPhoneNo: '',
+        custAddress: '',
+        custEmail: '',
         techicalDetailsMapping: [],
         uploadedFiles: [], // ✅ no error now
     });
@@ -195,6 +210,11 @@ const InquiryForm = () => {
         customerId: 0,
         region: '',
         city: '',
+        state: '',
+        country: '',
+        salutation: '',
+        cpfirstName: '',
+        cplastName: '',
         enquiryNo: '',
         enquiryDate: new Date(),
         rfqNo: '',
@@ -206,13 +226,14 @@ const InquiryForm = () => {
         netPriceWithoutGST: 0,
         totalPackage: 0,
         status: 'Draft',
+        offerStatus: '',
         createdOn: new Date(),
         createdBy: '',
         updatedOn: new Date(),
         updatedBy: '',
-        email: '',
-        phoneNo: '',
-        address: '',
+        custPhoneNo: '',
+        custAddress: '',
+        custEmail: '',
         techicalDetailsMapping: [],
         uploadedFiles: [], // ✅ no error now
     });
@@ -223,7 +244,63 @@ const InquiryForm = () => {
     // Define the motor type options
     const motorTypeOptions = ['LT', 'HT'];
     const regionOptions = ['North', 'South', 'East', 'West'];
-    const statusOptions = ['Draft', 'Offer Sent', 'Approved', 'Closed'];
+    const stateOptions = [
+        'Andhra Pradesh',
+        'Arunachal Pradesh',
+        'Assam',
+        'Bihar',
+        'Chhattisgarh',
+        'Goa',
+        'Gujarat',
+        'Haryana',
+        'Himachal Pradesh',
+        'Jharkhand',
+        'Karnataka',
+        'Kerala',
+        'Madhya Pradesh',
+        'Maharashtra',
+        'Manipur',
+        'Meghalaya',
+        'Mizoram',
+        'Nagaland',
+        'Odisha',
+        'Punjab',
+        'Rajasthan',
+        'Sikkim',
+        'Tamil Nadu',
+        'Telangana',
+        'Tripura',
+        'Uttar Pradesh',
+        'Uttarakhand',
+        'West Bengal',
+        'Andaman and Nicobar Islands',
+        'Chandigarh',
+        'Dadra and Nagar Haveli and Daman and Diu',
+        'Delhi',
+        'Jammu and Kashmir',
+        'Ladakh',
+        'Lakshadweep',
+        'Puducherry'
+    ];
+    const countryOptions = ['India'];
+    const salutationOptions = [
+        'Mr.',
+        'Mrs.',
+        'Ms.',
+        'Miss',
+        'Dr.',
+        'Prof.',
+        'Mx.',
+        'Master',
+        'Rev.',
+        'Fr.',
+        'Sr.',
+        'Smt.',
+        'Sri',
+        'Er.'
+    ];
+    const statusOptions = ['Draft', 'Offer Sent'];
+    const offerStatusOptions = ['Budgetary', "Live", 'Won', 'Lost', 'Hold'];
     const phaseOptions = ['Single', 'Three'];
     const poleOptions = ['2', '4', '6', '8', '10', '12', '14', '16', '2/4', '4/8', '2/12', '4/12'];
     const frameSizeOptions = [
@@ -515,6 +592,7 @@ const InquiryForm = () => {
             segment: "",
             narration: "",
             amount: "",
+            deliveryTime: ''
         });
         setOpenModal(false);
     };
@@ -556,6 +634,7 @@ const InquiryForm = () => {
             segment: "",
             narration: "",
             amount: "",
+            deliveryTime: ''
         });
         setOpenModal(true);
     };
@@ -712,6 +791,16 @@ const InquiryForm = () => {
             }));
         };
     };
+
+    // Format number to Indian currency format
+    const formatRupee = (value: string | number) =>
+        new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 2,
+        }).format(Number(value));
+
+
     const handleEnumChangeValue = (type: ListOfValueType, setFunction: React.Dispatch<React.SetStateAction<any>>) => {
         return async (event: any, newValue: any) => {
 
@@ -853,7 +942,7 @@ const InquiryForm = () => {
         <Box sx={{ p: 0 }}>
             <Card sx={{ mt: '6px' }}>
                 <CardContent>
-                    <Typography variant="h6" gutterBottom>
+                    <Typography variant="h4" gutterBottom align="center">
                         Inquiry Form
                     </Typography>
                     <Grid container spacing={2}>
@@ -887,9 +976,7 @@ const InquiryForm = () => {
                             />
                         </Grid>
                     </Grid>
-                    <Typography variant="h6" sx={{ mt: 4 }}>
-                        Customer Details
-                    </Typography>
+                    <SectionHeader title="Customer Details" />
 
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 6 }} >
@@ -935,7 +1022,7 @@ const InquiryForm = () => {
                                 }}
                                 value={
                                     formData.customerName
-                                        ? { label: formData.customerName, value: formData.customerId, address: formData.address, email: formData.email, phoneNo: formData.phoneNo }
+                                        ? { label: formData.customerName, value: formData.customerId, address: formData.custAddress, email: formData.custEmail, phoneNo: formData.custPhoneNo }
                                         : null
                                 }
                                 onChange={(event, newValue) => {
@@ -966,9 +1053,9 @@ const InquiryForm = () => {
                                             ...prev,
                                             customerName: newValue.label,
                                             customerId: newValue.value,
-                                            email: custt.email,
-                                            address: custt.address,
-                                            phoneNo: custt.phoneNo,
+                                            custEmail: custt.email,
+                                            custAddress: custt.address,
+                                            custPhoneNo: custt.phoneNo,
                                         }));
                                     } else {
                                         // Cleared input
@@ -984,21 +1071,21 @@ const InquiryForm = () => {
                                 )}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }} >
+                        <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
                                 label="Email"
-                                name="email"
-                                value={formData.email}
+                                name="custEmail"
+                                value={formData.custEmail}
                                 onChange={handleChange}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }} >
+                        <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
                                 label="Phone No"
-                                name="phoneNo"
-                                value={formData.phoneNo}
+                                name="custPhoneNo"
+                                value={formData.custPhoneNo}
                                 onChange={handleChange}
                             />
                         </Grid>
@@ -1006,12 +1093,12 @@ const InquiryForm = () => {
                             <TextField
                                 fullWidth
                                 label="Address"
-                                name="address"
-                                value={formData.address}
+                                name="custAddress"
+                                value={formData.custAddress}
                                 onChange={handleChange}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }} >
+                        <Grid size={{ xs: 12, sm: 3 }} >
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Region</InputLabel>
                                 <Select
@@ -1029,69 +1116,138 @@ const InquiryForm = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }} >
+                        <Grid size={{ xs: 12, sm: 3 }} >
                             <Autocomplete
                                 freeSolo
                                 selectOnFocus
                                 clearOnBlur
                                 handleHomeEndKeys
-                                options={citys}
+                                options={citys} // Your options array (e.g., cities list)
                                 getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
-                                value={formData.stdPaymentTerms}
-                                onChange={async (event, newValue) => {
-                                    if (newValue) {
-                                        // If user selected an option or typed a new one
-                                        if (typeof newValue === 'string') {
-                                            // User typed a new value
-                                            const sTdstr = newValue.trim();
-
-                                            // Set selected customer as a new object with label and value as 0 (new customer)
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                city: sTdstr
-                                            }));
-
-                                            // Check if customer exists and call API to add new customer
-                                            const isExist = listOfValues.some(c => c.value.toLowerCase() === sTdstr.toLowerCase() && c.type == ListOfValueType.City);
-                                            if (!isExist) {
-                                                try {
-                                                    await api.post('ListOfValues', { id: 0, type: ListOfValueType.City, value: sTdstr });
-                                                    fetchListOfValues(); // Reload StdPaymentTerms list
-                                                } catch (error) {
-                                                    console.error('Error adding new StdPaymentTerms:', error);
-                                                }
-                                            }
-                                        } else {
-                                            // User selected an option from the dropdown
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                city: newValue.label
-                                            }));
-                                        }
-                                    } else {
-                                        // If user cleared the input, reset customer values
+                                value={formData.city} // Ensure formData.city is updated correctly
+                                onChange={async (event, newValue: any) => {
+                                    if (newValue && newValue.value === -1) {
+                                        // Handle "Add" new entry case
+                                        const newCity = newValue.inputValue.trim();
                                         setFormData((prev) => ({
                                             ...prev,
-                                            city: ''
+                                            city: newCity,
+                                        }));
+
+                                        try {
+                                            await api.post('ListOfValues', {
+                                                id: 0,
+                                                type: ListOfValueType.City,
+                                                value: newCity,
+                                            });
+                                            fetchListOfValues(); // Reload list
+                                        } catch (error) {
+                                            console.error('Error adding new city:', error);
+                                        }
+                                    } else if (newValue) {
+                                        // Handle selecting an existing city
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            city: newValue.label,
+                                        }));
+                                    } else {
+                                        // Clear the value if the user clears the input
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            city: '',
                                         }));
                                     }
                                 }}
                                 filterOptions={(options, params): { label: string; value: number }[] => {
                                     const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
-
                                     if (params.inputValue !== '') {
                                         filtered.push({
                                             label: `Add "${params.inputValue}"`,
-                                            value: -1, // or 0, any placeholder to indicate new entry
-                                            inputValue: params.inputValue // optionally used to track free text
-                                        } as any); // Cast to any if you're adding custom fields temporarily
+                                            value: -1,
+                                            inputValue: params.inputValue,
+                                        } as any);
                                     }
-
                                     return filtered;
                                 }}
                                 renderInput={(params) => (
-                                    <TextField {...params} label="City" variant="outlined" />
+                                    <TextField {...params} label="City" variant="outlined" fullWidth />
                                 )}
+                            />
+
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel>State</InputLabel>
+                                <Select
+                                    label="State"
+                                    name="state"
+                                    value={formData.state}
+                                    onChange={handleChange}
+                                >
+                                    {stateOptions.map((option) => (
+                                        <MenuItem key={option} value={option}>
+                                            {option}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel>Country</InputLabel>
+                                <Select
+                                    label="Country"
+                                    name="country"
+                                    value={formData.country}
+                                    onChange={handleChange}
+                                >
+                                    {countryOptions.map((option) => (
+                                        <MenuItem key={option} value={option}>
+                                            {option}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                    </Grid>
+
+                    <SectionHeader title="Contact Person" />
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 1 }} >
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel>Salutation</InputLabel>
+                                <Select
+                                    label="Salutation"
+                                    name="salutation"
+                                    value={formData.salutation}
+                                    onChange={handleChange}
+                                >
+                                    {salutationOptions.map((option) => (
+                                        <MenuItem key={option} value={option}>
+                                            {option}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <TextField
+                                fullWidth
+                                label="First Name"
+                                name="cpfirstName"
+                                value={formData.cpfirstName}
+                                onChange={handleChange}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <TextField
+                                fullWidth
+                                label="Last Name"
+                                name="cplastName"
+                                value={formData.cplastName}
+                                onChange={handleChange}
                             />
                         </Grid>
                     </Grid>
@@ -1099,126 +1255,139 @@ const InquiryForm = () => {
             </Card>
             <Card sx={{ mt: '6px' }}>
                 <CardContent>
+
                     <Grid container spacing={2}>
                         {/* Brand Mapping Section */}
                         <Grid size={{ xs: 12 }} >
-                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                                <Typography variant="h6">
-                                    Technical Details  <Button
-                                        onClick={handleOpenModal}
-                                        variant="outlined"
-                                        sx={{ ml: 'auto' }}
-                                    >
-                                        Add Details
-                                    </Button>
-                                </Typography>
-                            </Box>
-
-                            {formData.techicalDetailsMapping.length > 0 && (
-                                <TableContainer sx={{
-                                    maxHeight: 300,
-                                    width: '100%',
-                                    overflow: 'auto',
-                                    display: 'block'
-                                }}>
-                                    <Table stickyHeader size="small">
-                                        <TableHead>
-                                            <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
-                                                <TableCell>Action</TableCell>
-                                                <TableCell>Motor Type</TableCell>
-                                                <TableCell>KW</TableCell>
-                                                <TableCell>HP</TableCell>
-                                                <TableCell>Phase</TableCell>
-                                                <TableCell>Pole</TableCell>
-                                                <TableCell>Frame Size</TableCell>
-                                                <TableCell>DOP</TableCell>
-                                                <TableCell>Insu. Class</TableCell>
-                                                <TableCell>Efficiency</TableCell>
-                                                <TableCell>Voltage</TableCell>
-                                                <TableCell>Frequency</TableCell>
-                                                <TableCell>Qty</TableCell>
-                                                <TableCell>Mounting</TableCell>
-                                                <TableCell>Safe/Hazardous</TableCell>
-                                                <TableCell>Brand</TableCell>
-                                                <TableCell>Zone</TableCell>
-                                                <TableCell>Temp Class</TableCell>
-                                                <TableCell>Gas Group</TableCell>
-                                                <TableCell>Hazardous Desc</TableCell>
-                                                <TableCell>Duty</TableCell>
-                                                <TableCell>StartsPerHour</TableCell>
-                                                <TableCell>Cdf</TableCell>
-                                                <TableCell>AmbientTemp</TableCell>
-                                                <TableCell>TempRise</TableCell>
-                                                <TableCell>Accessories</TableCell>
-                                                <TableCell>Brake</TableCell>
-                                                <TableCell>EncoderMounting</TableCell>
-                                                <TableCell>EncoderMountingIfYes</TableCell>
-                                                <TableCell>Application</TableCell>
-                                                <TableCell>Segment</TableCell>
-                                                <TableCell>Amount</TableCell>
-                                                <TableCell>Total Amt</TableCell>
-                                                <TableCell>Narration</TableCell>
-
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {formData.techicalDetailsMapping.map((brand, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell>
-                                                        <Button
-                                                            color="primary"
-                                                            onClick={() => handleEditBrand(index)}
-                                                            startIcon={<Edit />}
-                                                        >
-                                                        </Button>
-                                                        <Button
-                                                            color="secondary"
-                                                            onClick={() => handleDeleteDialogOpen(index)}
-                                                            startIcon={<Delete />}
-                                                        >
-                                                        </Button>
-                                                    </TableCell>
-                                                    <TableCell>{brand.motorType}</TableCell>
-                                                    <TableCell>{brand.kw}</TableCell>
-                                                    <TableCell>{brand.hp}</TableCell>
-                                                    <TableCell>{brand.phase}</TableCell>
-                                                    <TableCell>{brand.pole}</TableCell>
-                                                    <TableCell>{brand.frameSize}</TableCell>
-                                                    <TableCell>{brand.dop}</TableCell>
-                                                    <TableCell>{brand.insulationClass}</TableCell>
-                                                    <TableCell>{brand.efficiency}</TableCell>
-                                                    <TableCell>{brand.voltage}</TableCell>
-                                                    <TableCell>{brand.frequency}</TableCell>
-                                                    <TableCell>{brand.quantity}</TableCell>
-                                                    <TableCell>{brand.mounting}</TableCell>
-                                                    <TableCell>{brand.safeAreaHazardousArea}</TableCell>
-                                                    <TableCell>{brand.brand}</TableCell>
-                                                    <TableCell>{brand.zone}</TableCell>
-                                                    <TableCell>{brand.tempClass}</TableCell>
-                                                    <TableCell>{brand.gasGroup}</TableCell>
-                                                    <TableCell>{brand.hardadousDescription}</TableCell>
-                                                    <TableCell>{brand.duty}</TableCell>
-                                                    <TableCell>{brand.startsPerHour}</TableCell>
-                                                    <TableCell>{brand.cdf}</TableCell>
-                                                    <TableCell>{brand.ambientTemp}</TableCell>
-                                                    <TableCell>{brand.tempRise}</TableCell>
-                                                    <TableCell>{brand.accessories}</TableCell>
-                                                    <TableCell>{brand.brake}</TableCell>
-                                                    <TableCell>{brand.encoderMounting}</TableCell>
-                                                    <TableCell>{brand.encoderMountingIfYes}</TableCell>
-                                                    <TableCell>{brand.application}</TableCell>
-                                                    <TableCell>{brand.segment}</TableCell>
-                                                    <TableCell>{brand.amount}</TableCell>
-                                                    <TableCell>{+brand.amount * +brand.quantity}</TableCell>
-                                                    <TableCell>{brand.narration}</TableCell>
+                            <SectionHeader title=" Technical Details" />
+                            <Button
+                                onClick={handleOpenModal}
+                                variant="contained"
+                                sx={{ ml: 'auto' }}
+                            >
+                                Add Details
+                            </Button>
+                            <Box sx={{ overflowX: 'auto', width: 1580 }}>
+                                {formData.techicalDetailsMapping.length > 0 && (
+                                    <TableContainer sx={{
+                                        maxHeight: 300,
+                                        minWidth: 'fit-content',
+                                        overflow: 'auto',
+                                        display: 'block'
+                                    }}>
+                                        <Table stickyHeader size="small">
+                                            <TableHead>
+                                                <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
+                                                    <TableCell>Action</TableCell>
+                                                    <TableCell>Motor Type</TableCell>
+                                                    <TableCell>KW</TableCell>
+                                                    <TableCell>HP</TableCell>
+                                                    <TableCell>Phase</TableCell>
+                                                    <TableCell>Pole</TableCell>
+                                                    <TableCell>Frame Size</TableCell>
+                                                    <TableCell>DOP</TableCell>
+                                                    <TableCell>Insu. Class</TableCell>
+                                                    <TableCell>Efficiency</TableCell>
+                                                    <TableCell>Voltage</TableCell>
+                                                    <TableCell>Frequency</TableCell>
+                                                    <TableCell>Qty</TableCell>
+                                                    <TableCell>Mounting</TableCell>
+                                                    <TableCell>Safe/Hazardous</TableCell>
+                                                    <TableCell>Brand</TableCell>
+                                                    <TableCell>Zone</TableCell>
+                                                    <TableCell>Temp Class</TableCell>
+                                                    <TableCell>Gas Group</TableCell>
+                                                    <TableCell>Hazardous Desc</TableCell>
+                                                    <TableCell>Duty</TableCell>
+                                                    <TableCell>StartsPerHour</TableCell>
+                                                    <TableCell>Cdf</TableCell>
+                                                    <TableCell>AmbientTemp</TableCell>
+                                                    <TableCell>TempRise</TableCell>
+                                                    <TableCell>Accessories</TableCell>
+                                                    <TableCell>Brake</TableCell>
+                                                    <TableCell>EncoderMounting</TableCell>
+                                                    <TableCell>EncoderMountingIfYes</TableCell>
+                                                    <TableCell>Application</TableCell>
+                                                    <TableCell>Segment</TableCell>
+                                                    <TableCell>Amount</TableCell>
+                                                    <TableCell>Total Amt</TableCell>
+                                                    <TableCell>Narration</TableCell>
+                                                    <TableCell>Delivery TIme</TableCell>
 
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            )}
+                                            </TableHead>
+                                            <TableBody>
+                                                {formData.techicalDetailsMapping.map((brand, index) => (
+                                                    <TableRow key={index}>
+                                                        <TableCell>
+                                                            <Button
+                                                                color="primary"
+                                                                onClick={() => handleEditBrand(index)}
+                                                                startIcon={<Edit />}
+                                                            >
+                                                            </Button>
+                                                            <Button
+                                                                color="secondary"
+                                                                onClick={() => handleDeleteDialogOpen(index)}
+                                                                startIcon={<Delete />}
+                                                            >
+                                                            </Button>
+                                                        </TableCell>
+                                                        <TableCell>{brand.motorType}</TableCell>
+                                                        <TableCell>{brand.kw}</TableCell>
+                                                        <TableCell>{brand.hp}</TableCell>
+                                                        <TableCell>{brand.phase}</TableCell>
+                                                        <TableCell>{brand.pole}</TableCell>
+                                                        <TableCell>{brand.frameSize}</TableCell>
+                                                        <TableCell>{brand.dop}</TableCell>
+                                                        <TableCell>{brand.insulationClass}</TableCell>
+                                                        <TableCell>{brand.efficiency}</TableCell>
+                                                        <TableCell>{brand.voltage}</TableCell>
+                                                        <TableCell>{brand.frequency}</TableCell>
+                                                        <TableCell>{brand.quantity}</TableCell>
+                                                        <TableCell>{brand.mounting}</TableCell>
+                                                        <TableCell>{brand.safeAreaHazardousArea}</TableCell>
+                                                        <TableCell>{brand.brand}</TableCell>
+                                                        <TableCell>{brand.zone}</TableCell>
+                                                        <TableCell>{brand.tempClass}</TableCell>
+                                                        <TableCell>{brand.gasGroup}</TableCell>
+                                                        <TableCell>{brand.hardadousDescription}</TableCell>
+                                                        <TableCell>{brand.duty}</TableCell>
+                                                        <TableCell>{brand.startsPerHour}</TableCell>
+                                                        <TableCell>{brand.cdf}</TableCell>
+                                                        <TableCell>{brand.ambientTemp}</TableCell>
+                                                        <TableCell>{brand.tempRise}</TableCell>
+                                                        <TableCell>{brand.accessories}</TableCell>
+                                                        <TableCell>{brand.brake}</TableCell>
+                                                        <TableCell>{brand.encoderMounting}</TableCell>
+                                                        <TableCell>{brand.encoderMountingIfYes}</TableCell>
+                                                        <TableCell>{brand.application}</TableCell>
+                                                        <TableCell>{brand.segment}</TableCell>
+                                                        <TableCell>
+                                                            {new Intl.NumberFormat('en-IN', {
+                                                                style: 'currency',
+                                                                currency: 'INR',
+                                                                maximumFractionDigits: 2,
+                                                            }).format(+brand.amount)}
+                                                        </TableCell>
 
+                                                        <TableCell>
+                                                            {new Intl.NumberFormat('en-IN', {
+                                                                style: 'currency',
+                                                                currency: 'INR',
+                                                                maximumFractionDigits: 2,
+                                                            }).format(+brand.amount * +brand.quantity)}
+                                                        </TableCell>
+                                                        <TableCell>{brand.narration}</TableCell>
+                                                        <TableCell>{brand.deliveryTime}</TableCell>
+
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                )}
+                            </Box>
                         </Grid>
 
                     </Grid>
@@ -1227,74 +1396,66 @@ const InquiryForm = () => {
 
             <Card sx={{ mt: '6px' }}>
                 <CardContent>
-
-                    <Grid size={{ xs: 12, sm: 4 }} >
-                        <Typography variant="h6" sx={{ mt: 4 }}>
-                            Other Details
-                        </Typography>
-                    </Grid>
+                    <SectionHeader title="Other Details" />
                     <Grid container spacing={2}>
 
                         {/* Standard Payment Terms */}
                         <Grid size={{ xs: 12, sm: 3 }} >
+
                             <Autocomplete
                                 freeSolo
-                                options={stdPaymentTerms}
+                                selectOnFocus
+                                clearOnBlur
+                                handleHomeEndKeys
+                                options={stdPaymentTerms} // Your options array (e.g., cities list)
                                 getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
-                                value={formData.stdPaymentTerms}
-                                onChange={async (event, newValue) => {
-                                    if (newValue) {
-                                        // If user selected an option or typed a new one
-                                        if (typeof newValue === 'string') {
-                                            // User typed a new value
-                                            const sTdstr = newValue.trim();
-
-                                            // Set selected customer as a new object with label and value as 0 (new customer)
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                stdPaymentTerms: sTdstr
-                                            }));
-
-                                            // Check if customer exists and call API to add new customer
-                                            const isExist = listOfValues.some(c => c.value.toLowerCase() === sTdstr.toLowerCase() && c.type == ListOfValueType.StdPaymentTerms);
-                                            if (!isExist) {
-                                                try {
-                                                    await api.post('ListOfValues', { id: 0, type: ListOfValueType.StdPaymentTerms, value: sTdstr });
-                                                    fetchListOfValues(); // Reload StdPaymentTerms list
-                                                } catch (error) {
-                                                    console.error('Error adding new StdPaymentTerms:', error);
-                                                }
-                                            }
-                                        } else {
-                                            // User selected an option from the dropdown
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                stdPaymentTerms: newValue.label
-                                            }));
-                                        }
-                                    } else {
-                                        // If user cleared the input, reset customer values
+                                value={formData.stdPaymentTerms} // Ensure formData.city is updated correctly
+                                onChange={async (event, newValue: any) => {
+                                    if (newValue && newValue.value === -1) {
+                                        // Handle "Add" new entry case
+                                        const newValueStd = newValue.inputValue.trim();
                                         setFormData((prev) => ({
                                             ...prev,
-                                            stdPaymentTerms: ''
+                                            stdPaymentTerms: newValueStd,
+                                        }));
+
+                                        try {
+                                            await api.post('ListOfValues', {
+                                                id: 0,
+                                                type: ListOfValueType.StdPaymentTerms,
+                                                value: newValueStd,
+                                            });
+                                            fetchListOfValues(); // Reload list
+                                        } catch (error) {
+                                            console.error('Error adding new StdPaymentTerms:', error);
+                                        }
+                                    } else if (newValue) {
+                                        // Handle selecting an existing StdPaymentTerms
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            stdPaymentTerms: newValue.label,
+                                        }));
+                                    } else {
+                                        // Clear the value if the user clears the input
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            stdPaymentTerms: '',
                                         }));
                                     }
                                 }}
                                 filterOptions={(options, params): { label: string; value: number }[] => {
                                     const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
-
                                     if (params.inputValue !== '') {
                                         filtered.push({
                                             label: `Add "${params.inputValue}"`,
-                                            value: -1, // or 0, any placeholder to indicate new entry
-                                            inputValue: params.inputValue // optionally used to track free text
-                                        } as any); // Cast to any if you're adding custom fields temporarily
+                                            value: -1,
+                                            inputValue: params.inputValue,
+                                        } as any);
                                     }
-
                                     return filtered;
                                 }}
                                 renderInput={(params) => (
-                                    <TextField {...params} label="Std Payment Terms" variant="outlined" />
+                                    <TextField {...params} label="Std Payment Terms" variant="outlined" fullWidth />
                                 )}
                             />
                         </Grid>
@@ -1345,9 +1506,19 @@ const InquiryForm = () => {
                                 fullWidth
                                 label="Total Package"
                                 name="totalPackage"
-                                type="number"
-                                value={formData.totalPackage}
-                                onChange={handleChange}
+                                type="text" // Change to text to show formatted string
+                                value={formatRupee(formData.totalPackage || 0)}
+                                onChange={(e) => {
+                                    // Remove non-numeric characters and commas
+                                    const numericValue = e.target.value.replace(/[^\d.]/g, '');
+                                    handleChange({
+                                        target: {
+                                            name: 'totalPackage',
+                                            value: numericValue,
+                                        },
+                                    });
+                                }}
+
                             />
                         </Grid>
                     </Grid>
@@ -1357,13 +1528,8 @@ const InquiryForm = () => {
 
             <Card>
                 <CardContent>
+                    <SectionHeader title="Upload Files" />
                     <Grid container spacing={3}>
-                        <Grid size={{ xs: 12, sm: 2 }}>
-                            <Typography variant="h6" sx={{ mt: 1 }}>
-                                Upload Files
-                            </Typography>
-                        </Grid>
-
                         <Grid size={{ xs: 12 }}>
                             <Button
                                 variant="contained"
@@ -1417,39 +1583,9 @@ const InquiryForm = () => {
 
             <Card>
                 <CardContent>
-                    <Grid size={{ xs: 12, sm: 4 }} >
-                        <Typography variant="h6" sx={{ mt: 1 }}>
-                            RFQ
-                        </Typography>
-                    </Grid>
+                    <SectionHeader title="Status" />
                     <Grid container spacing={2}>
                         {/* Inquiry Main Fields */}
-
-                        <Grid size={{ xs: 12, sm: 4 }} >
-                            <TextField
-                                fullWidth
-                                label="RFQ No"
-                                name="rfqNo"
-                                type="number"
-                                value={formData.rfqNo}
-                                slotProps={{
-                                    input: {
-                                        readOnly: true,
-                                    },
-                                }}
-                                onChange={handleChange}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }} >
-                            <TextField
-                                fullWidth
-                                label="RFQ Date"
-                                type="date"
-                                name="rfqDate"
-                                value={formData.rfqDate}
-                                onChange={handleChange}
-                            />
-                        </Grid>
                         <Grid size={{ xs: 12, sm: 4 }} >
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Status</InputLabel>
@@ -1467,6 +1603,58 @@ const InquiryForm = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
+                        {formData.status == 'Offer Sent' && (
+                            <>
+                                <Grid size={{ xs: 12, sm: 4 }} >
+                                    <TextField
+                                        fullWidth
+                                        label="RFQ No"
+                                        name="rfqNo"
+                                        type="number"
+                                        value={formData.rfqNo}
+                                        slotProps={{
+                                            input: {
+                                                readOnly: true,
+                                            },
+                                        }}
+                                        onChange={handleChange}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 4 }} >
+                                    <TextField
+                                        fullWidth
+                                        label="RFQ Date"
+                                        type="date"
+                                        name="rfqDate"
+                                        value={formData.rfqDate}
+                                        onChange={handleChange}
+                                        slotProps={{
+                                            inputLabel: {
+                                                shrink: true,
+                                            },
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 4 }} >
+                                    <FormControl fullWidth variant="outlined">
+                                        <InputLabel>Offer Status</InputLabel>
+                                        <Select
+                                            label="Offer Status"
+                                            name="offerStatus"
+                                            value={formData.offerStatus}
+                                            onChange={handleChange}
+                                        >
+                                            {offerStatusOptions.map((option) => (
+                                                <MenuItem key={option} value={option}>
+                                                    {option}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                            </>)}
+
+
 
                     </Grid>
                 </CardContent>
@@ -2007,6 +2195,17 @@ const InquiryForm = () => {
                                 label="Narration"
                                 name="narration"
                                 value={brandInput.narration}
+                                onChange={handleBrandChange}
+                                multiline
+                                rows={2}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12 }} >
+                            <TextField
+                                fullWidth
+                                label="Delivery Time"
+                                name="deliveryTime"
+                                value={brandInput.deliveryTime}
                                 onChange={handleBrandChange}
                                 multiline
                                 rows={2}
