@@ -270,7 +270,6 @@ const InquiryGrid = () => {
     doc.save(`Inquiry_${formData.enquiryNo}.pdf`);
   };
 
-
   const inquiryColumns: GridColDef[] = [
     {
       field: 'actions',
