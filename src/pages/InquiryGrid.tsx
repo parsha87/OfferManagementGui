@@ -1,18 +1,61 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Button, Stack, Box, Modal, Typography, DialogActions, DialogTitle, Dialog, DialogContent, DialogContentText, IconButton, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import api from '../context/AxiosContext';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from './ConfirmDialog';
 import EditIcon from '@mui/icons-material/Edit';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import html2canvas from "html2canvas";
+import html2pdf from 'html2pdf.js';
+
+
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
+
+
+
+
+const cellStyle: React.CSSProperties = {
+  border: '1px solid black',
+  padding: '4px 8px',
+  textAlign: 'center',
+  fontWeight: 'bold',
+};
+
+const cellStyleNew: React.CSSProperties = {
+  border: '1px solid black',
+  padding: '4px 8px',
+  textAlign: 'center',
+  fontWeight: 'bold',
+};
+const cellStyleHeader: React.CSSProperties = {
+  border: '1px solid black',
+  padding: '6px',
+  fontWeight: 'bold',
+  textAlign: 'left',
+  verticalAlign: 'top',
+};
+
+const cellStyleValue: React.CSSProperties = {
+  border: '1px solid black',
+  padding: '6px',
+  textAlign: 'left',
+  verticalAlign: 'top'
+};
+
 
 const InquiryGrid = () => {
   const navigate = useNavigate();
@@ -33,6 +76,8 @@ const InquiryGrid = () => {
   const regionOptions = ['North', 'South', 'East', 'West'];
   const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]); // Use useState to store the options
   const [customerTypeOptions, setCustomerTypeOptions] = useState<string[]>([]); // Use useState to store the options
+  // const printRef = useRef<HTMLDivElement>(null);
+
 
 
 
@@ -137,9 +182,15 @@ const InquiryGrid = () => {
   // };
 
   const handleOpenTechnicalDetails = (technicalDetails: any[]) => {
+    console.log(technicalDetails);
+    technicalDetails.forEach((item, index) => {
+      item['totalAmount'] = item.amount * item.quantity;
+      item['rowIndex'] = index + 1;  // Adding 1 to start row index from 1
+    });
     setSelectedTechnicalDetails(technicalDetails || []);
     setOpenModal(true);
   };
+
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -163,6 +214,11 @@ const InquiryGrid = () => {
     }
   };
 
+  const getTotalAmt = (qnty: any, amt: any) => {
+    return qnty * amt;
+  }
+
+
   const handleExportExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
@@ -173,102 +229,33 @@ const InquiryGrid = () => {
     saveAs(blob, 'inquiries.xlsx');
   };
 
-  const handleExportPDF = (formData: any) => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 10;
+  const handleDownload = async () => {
+    try {
+      const response = await api.post(
+        'Inquiry/downloadPdf',
+        {}, // This is the actual request body, which is empty
+        {
+          responseType: 'blob', // This must go in the 3rd parameter (config), NOT in the body
+        }
+      );
 
-    // Add title
-    doc.setFontSize(18);
-    doc.text('Inquiry Details', pageWidth / 2, 15, { align: 'center' });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
 
-    // Add basic info
-    doc.setFontSize(12);
-    doc.text(`Enquiry No: ${formData.enquiryNo}`, margin, 30);
-    doc.text(`Enquiry Date: ${formData.enquiryDate}`, margin, 40);
-    doc.text(`Status: ${formData.status}`, margin, 50);
-
-    // Add customer details section
-    doc.setFontSize(14);
-    doc.text('Customer Details', margin, 70);
-    doc.setFontSize(12);
-
-    let y = 80;
-    doc.text(`Customer Name: ${formData.customerName}`, margin, y);
-    y += 10;
-    doc.text(`Customer Type: ${formData.customerType}`, margin, y);
-    y += 10;
-    doc.text(`Email: ${formData.email}`, margin, y);
-    y += 10;
-    doc.text(`Phone No: ${formData.phoneNo}`, margin, y);
-    y += 10;
-    doc.text(`Address: ${formData.address}`, margin, y);
-    y += 10;
-    doc.text(`Region: ${formData.region}`, margin, y);
-    y += 10;
-    doc.text(`City: ${formData.city}`, margin, y);
-
-    // Add technical details table
-    if (formData.techicalDetailsMapping.length > 0) {
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text('Technical Details', margin, 20);
-
-      const techColumns = [
-        { header: 'Motor Type', dataKey: 'motorType' },
-        { header: 'KW', dataKey: 'kw' },
-        { header: 'HP', dataKey: 'hp' },
-        { header: 'Phase', dataKey: 'phase' },
-        { header: 'Pole', dataKey: 'pole' },
-        { header: 'Qty', dataKey: 'quantity' },
-        { header: 'Amount', dataKey: 'amount' }
-      ];
-
-      autoTable(doc, {
-        startY: 30,
-        head: [techColumns.map(col => col.header)],
-        body: formData.techicalDetailsMapping.map((detail: any) =>
-          techColumns.map(col => detail[col.dataKey])
-        ),
-        margin: { left: margin }
-      });
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'report.pdf';
+      document.body.appendChild(link); // Append to body to ensure it works in all browsers
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // Clean up
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
     }
-
-    // Add other details
-    doc.addPage();
-    doc.setFontSize(14);
-    doc.text('Other Details', margin, 20);
-    doc.setFontSize(12);
-
-    y = 30;
-    doc.text(`Standard Payment Terms: ${formData.stdPaymentTerms}`, margin, y);
-    y += 10;
-    doc.text(`Standard Inco Terms: ${formData.stdIncoTerms}`, margin, y);
-    y += 20;
-
-    doc.text('Pricing Information', margin, y);
-    y += 10;
-    doc.text(`List Price: ${formData.listPrice}`, margin, y);
-    y += 10;
-    doc.text(`Discount: ${formData.discount}`, margin, y);
-    y += 10;
-    doc.text(`Net Price (without GST): ${formData.netPriceWithoutGST}`, margin, y);
-    y += 10;
-    doc.text(`Total Package: ${formData.totalPackage}`, margin, y);
-
-    // Add RFQ details
-    y += 20;
-    doc.setFontSize(14);
-    doc.text('RFQ Details', margin, y);
-    doc.setFontSize(12);
-    y += 10;
-    doc.text(`RFQ No: ${formData.rfqNo}`, margin, y);
-    y += 10;
-    doc.text(`RFQ Date: ${formData.rfqDate}`, margin, y);
-
-    // Save the PDF
-    doc.save(`Inquiry_${formData.enquiryNo}.pdf`);
   };
+
+
+
 
   const inquiryColumns: GridColDef[] = [
     {
@@ -299,7 +286,7 @@ const InquiryGrid = () => {
           >
             <VisibilityIcon />
           </IconButton>
-          {/* <IconButton
+          <IconButton
             color="info"
             size="small"
             onClick={handleExportExcel}
@@ -310,10 +297,11 @@ const InquiryGrid = () => {
           <IconButton
             color="info"
             size="small"
-            onClick={() => handleExportPDF(params.row)}
+          // onClick={() => handleExportPDF(params.row, params.row.techicalDetailsMapping ?? [])}
+          // onClick={() => handlePrintPDF}
           >
             <PictureAsPdfIcon />
-          </IconButton> */}
+          </IconButton>
         </Stack>
       ),
     },
@@ -383,25 +371,28 @@ const InquiryGrid = () => {
   ];
 
   const technicalDetailsColumns: GridColDef[] = [
-    { field: 'motorType', headerName: 'Motor Type', width: 130 },
-    { field: 'kw', headerName: 'KW', width: 80 },
-    { field: 'hp', headerName: 'HP', width: 80 },
-    { field: 'phase', headerName: 'Phase', width: 100 },
-    { field: 'pole', headerName: 'Pole', width: 80 },
-    { field: 'frameSize', headerName: 'Frame Size', width: 100 },
-    { field: 'dop', headerName: 'DOP', width: 100 },
-    { field: 'insulationClass', headerName: 'Insulation Class', width: 150 },
-    { field: 'efficiency', headerName: 'Efficiency', width: 120 },
-    { field: 'voltage', headerName: 'Voltage', width: 100 },
-    { field: 'frequency', headerName: 'Frequency', width: 100 },
-    { field: 'quantity', headerName: 'Quantity', width: 100 },
-    { field: 'mounting', headerName: 'Mounting', width: 100 },
-    { field: 'safeAreaHazardousArea', headerName: 'Safe Area/Hazardous', width: 180 },
-    { field: 'brand', headerName: 'Brand', width: 100 },
-    { field: 'application', headerName: 'Application', width: 150 },
-    { field: 'segment', headerName: 'Segment', width: 120 },
-    { field: 'narration', headerName: 'Narration', width: 200 },
-    { field: 'amount', headerName: 'Amount', width: 100 },
+    // { field: 'motorType', headerName: 'Motor Type', width: 130 },
+    // { field: 'kw', headerName: 'KW', width: 80 },
+    // { field: 'hp', headerName: 'HP', width: 80 },
+    // { field: 'phase', headerName: 'Phase', width: 100 },
+    // { field: 'pole', headerName: 'Pole', width: 80 },
+    // { field: 'frameSize', headerName: 'Frame Size', width: 100 },
+    // { field: 'dop', headerName: 'DOP', width: 100 },
+    // { field: 'insulationClass', headerName: 'Insulation Class', width: 150 },
+    // { field: 'efficiency', headerName: 'Efficiency', width: 120 },
+    // { field: 'voltage', headerName: 'Voltage', width: 100 },
+    // { field: 'frequency', headerName: 'Frequency', width: 100 },
+    // { field: 'mounting', headerName: 'Mounting', width: 100 },
+    // { field: 'safeAreaHazardousArea', headerName: 'Safe Area/Hazardous', width: 180 },
+    // { field: 'brand', headerName: 'Brand', width: 100 },
+    // { field: 'application', headerName: 'Application', width: 150 },
+    // { field: 'segment', headerName: 'Segment', width: 120 },
+    { field: "rowIndex", headerName: "Sr.No.", width: 100 },
+    { field: 'narration', headerName: 'Narration', width: 300 },
+    { field: 'deliveryTime', headerName: 'Delivery Time', width: 300 },
+    { field: 'quantity', headerName: 'Quantity', width: 170 },
+    { field: 'amount', headerName: 'Unit Price (INR) ', width: 180 },
+    { field: "totalAmount", headerName: "Total Amount (INR)", width: 180 }
   ];
 
   return (
@@ -527,19 +518,88 @@ const InquiryGrid = () => {
             Technical Details
           </Typography>
 
-          {/* Scrollable technical table */}
+          {/* Custom Offer Header Table */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <table style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={cellStyle}>OFFER<br />NUMBER</th>
+                  <th style={cellStyle}>DATE</th>
+                  <th style={cellStyle}>PAGE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={cellStyle}>40042673</td>
+                  <td style={cellStyle}>9.5.2025</td>
+                  <td style={cellStyle}>1</td>
+                </tr>
+              </tbody>
+            </table>
+          </Box>
+
+
+          <Box sx={{ width: '100%', mb: 2 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td style={{ ...cellStyleHeader, width: '50%' }}>SHIP TO:</td>
+                  <td style={{ ...cellStyleHeader, width: '50%' }}>
+                    SOLD TO: Makharia Electricals Pvt Limited
+                  </td>
+                </tr>
+                <tr>
+                  <td style={cellStyleValue}>ATTENTION: Mr. Rajeshh. Makharia</td>
+                  <td style={cellStyleValue}>INQUIRY DATE: 5.5.2025</td>                </tr>
+
+              </tbody>
+            </table>
+          </Box>
+
+          {/* Scrollable Technical Data Table */}
           <Box sx={{ overflowX: 'auto' }}>
-            <Box sx={{ minWidth: 1000 }}>
-              <DataGrid
+            <Box
+              sx={{
+                minWidth: 1000,
+                '& .MuiDataGrid-root': {
+                  border: '2px solid black', // Outer border
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: '#f5f5f5',
+                  borderBottom: '2px solid black',
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  border: '1px solid black',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                },
+                '& .MuiDataGrid-cell': {
+                  border: '1px solid black',
+                  fontSize: '14px',
+                  padding: '8px',
+                },
+                '& .MuiDataGrid-row': {
+                  borderBottom: '1px solid black',
+                },
+              }}
+            >              <DataGrid
                 rows={selectedTechnicalDetails}
                 columns={technicalDetailsColumns}
-                getRowId={(row) => row.id}
+                getRowId={(row) => row.id || row.rowIndex} // fallback if 'id' is missing
                 autoHeight
                 hideFooter
               />
             </Box>
           </Box>
 
+
+          {/* Close Button */}
+          <Box mt={2} textAlign="right">
+            <Button variant="contained" onClick={handleDownload}>
+              Download
+            </Button>
+          </Box>
+          {/* Close Button */}
           <Box mt={2} textAlign="right">
             <Button variant="contained" onClick={handleCloseModal}>
               Close
