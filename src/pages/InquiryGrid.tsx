@@ -16,13 +16,43 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from "html2canvas";
 import html2pdf from 'html2pdf.js';
+import { MotorMapping } from './InquiryForm';
+import CircularProgress from '@mui/material/CircularProgress'; // MUI Loader component
 
 
 
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
+interface InquiryFormData {
+  inquiryId: number;
+  customerType: string;
+  customerName: string;
+  customerId: number;
+  region: string;
+  city: string;
+  state: string;
+  country: string;
+  salutation: string;
+  cpfirstName: string;
+  cplastName: string;
+  enquiryNo: string;
+  enquiryDate: Date;
+  rfqNo: string;
+  rfqDate: Date;
+  stdPaymentTerms: string;
+  stdIncoTerms: string;
+  listPrice: number;
+  discount: number;
+  netPriceWithoutGST: number;
+  totalPackage: number;
+  status: string;
+  offerStatus: string;
+  createdOn: Date;
+  createdBy: string;
+  updatedOn: Date;
+  updatedBy: string;
+  custPhoneNo: string;
+  custAddress: string;
+  custEmail: string;
+  techicalDetailsMapping: MotorMapping[];
 }
 
 
@@ -76,10 +106,78 @@ const InquiryGrid = () => {
   const regionOptions = ['North', 'South', 'East', 'West'];
   const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]); // Use useState to store the options
   const [customerTypeOptions, setCustomerTypeOptions] = useState<string[]>([]); // Use useState to store the options
+
   // const printRef = useRef<HTMLDivElement>(null);
 
 
+  const [formDataAll, setFormDataAll] = useState<InquiryFormData>({
+    inquiryId: 0,
+    customerType: '',
+    customerName: '',
+    customerId: 0,
+    region: '',
+    city: '',
+    state: '',
+    country: '',
+    salutation: '',
+    cpfirstName: '',
+    cplastName: '',
+    enquiryNo: '',
+    enquiryDate: new Date(),
+    rfqNo: '',
+    rfqDate: new Date(),
+    stdPaymentTerms: '',
+    stdIncoTerms: '',
+    listPrice: 0,
+    discount: 0,
+    netPriceWithoutGST: 0,
+    totalPackage: 0,
+    status: 'Draft',
+    offerStatus: '',
+    createdOn: new Date(),
+    createdBy: '',
+    updatedOn: new Date(),
+    updatedBy: '',
+    custPhoneNo: '',
+    custAddress: '',
+    custEmail: '',
+    techicalDetailsMapping: [],
+  });
 
+
+  const [formData, setFormData] = useState<InquiryFormData>({
+    inquiryId: 0,
+    customerType: '',
+    customerName: '',
+    customerId: 0,
+    region: '',
+    city: '',
+    state: '',
+    country: '',
+    salutation: '',
+    cpfirstName: '',
+    cplastName: '',
+    enquiryNo: '',
+    enquiryDate: new Date(),
+    rfqNo: '',
+    rfqDate: new Date(),
+    stdPaymentTerms: '',
+    stdIncoTerms: '',
+    listPrice: 0,
+    discount: 0,
+    netPriceWithoutGST: 0,
+    totalPackage: 0,
+    status: 'Draft',
+    offerStatus: '',
+    createdOn: new Date(),
+    createdBy: '',
+    updatedOn: new Date(),
+    updatedBy: '',
+    custPhoneNo: '',
+    custAddress: '',
+    custEmail: '',
+    techicalDetailsMapping: [],
+  });
 
   useEffect(() => {
     fetchData();
@@ -181,12 +279,13 @@ const InquiryGrid = () => {
   //   }
   // };
 
-  const handleOpenTechnicalDetails = (technicalDetails: any[]) => {
+  const handleOpenTechnicalDetails = (technicalDetails: any[], row: any) => {
     console.log(technicalDetails);
     technicalDetails.forEach((item, index) => {
       item['totalAmount'] = item.amount * item.quantity;
       item['rowIndex'] = index + 1;  // Adding 1 to start row index from 1
     });
+    setFormData(row)
     setSelectedTechnicalDetails(technicalDetails || []);
     setOpenModal(true);
   };
@@ -214,11 +313,6 @@ const InquiryGrid = () => {
     }
   };
 
-  const getTotalAmt = (qnty: any, amt: any) => {
-    return qnty * amt;
-  }
-
-
   const handleExportExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
@@ -231,10 +325,19 @@ const InquiryGrid = () => {
 
   const handleDownload = async () => {
     try {
+
+      setLoading(true); // Show the loader
+
+      formData.techicalDetailsMapping = selectedTechnicalDetails;
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("model", JSON.stringify(formData)); // Add only model data
+
       const response = await api.post(
         'Inquiry/downloadPdf',
-        {}, // This is the actual request body, which is empty
+        formDataToSend, // This is the actual request body, which is empty
         {
+          headers: { 'Content-Type': 'multipart/form-data' },
           responseType: 'blob', // This must go in the 3rd parameter (config), NOT in the body
         }
       );
@@ -251,6 +354,8 @@ const InquiryGrid = () => {
       window.URL.revokeObjectURL(url); // Clean up
     } catch (error) {
       console.error('Error downloading PDF:', error);
+    } finally {
+      setLoading(false); // Hide the loader once the process is done (success or failure)
     }
   };
 
@@ -282,26 +387,26 @@ const InquiryGrid = () => {
           <IconButton
             color="info"
             size="small"
-            onClick={() => handleOpenTechnicalDetails(params.row.techicalDetailsMapping ?? [])}
+            onClick={() => handleOpenTechnicalDetails(params.row.techicalDetailsMapping ?? [], params.row)}
           >
             <VisibilityIcon />
           </IconButton>
-          <IconButton
+          {/* <IconButton
             color="info"
             size="small"
             onClick={handleExportExcel}
           >
             <FileDownloadIcon />
-          </IconButton>
+          </IconButton> */}
 
-          <IconButton
+          {/* <IconButton
             color="info"
             size="small"
           // onClick={() => handleExportPDF(params.row, params.row.techicalDetailsMapping ?? [])}
           // onClick={() => handlePrintPDF}
           >
             <PictureAsPdfIcon />
-          </IconButton>
+          </IconButton> */}
         </Stack>
       ),
     },
@@ -396,227 +501,282 @@ const InquiryGrid = () => {
   ];
 
   return (
-
-    <Box mt={3}>
-      {/* Top bar with Add button */}
-      <Box display="flex" justifyContent="flex-start" mb={2}>
-        {/* Add Button */}
-        <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}
-        >
-          Add Inquiry
-        </Button>
-
-        <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}>
-          {/* Filters */}
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel shrink>Customer Type</InputLabel>
-            <Select
-              value={regionFilter}
-              onChange={customerTypeChange}
-              displayEmpty
-              renderValue={(selected) => selected === "" ? "All" : selected}             >
-              <MenuItem value="">All</MenuItem>
-              {customerTypeOptions.map((customerType) => (
-                <MenuItem key={customerType} value={customerType}>
-                  {customerType}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel shrink>Region</InputLabel>
-            <Select
-              value={regionFilter}
-              onChange={handleRegionChange}
-              displayEmpty
-              renderValue={(selected) => selected === "" ? "All" : selected}             >
-              <MenuItem value="">All</MenuItem>
-              {regionOptions.map((region) => (
-                <MenuItem key={region} value={region}>
-                  {region}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel shrink>Customer Name</InputLabel>
-            <Select
-              value={customerNameFilter}
-              onChange={customerNameChange}
-              displayEmpty
-              renderValue={(selected) => selected === "" ? "All" : selected}            >
-              <MenuItem value="">All</MenuItem>
-              {customerNameOptions.map((customerName) => (
-                <MenuItem key={customerName} value={customerName}>
-                  {customerName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel shrink>Status</InputLabel>
-            <Select
-              value={statusFilter}
-              onChange={handleStatusChange}
-              displayEmpty
-              renderValue={(selected) => selected === "" ? "All" : selected}             >
-              <MenuItem value="">All</MenuItem>
-              {statusOptions.map((status) => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}></Box>
-        <Button variant="contained" color="primary" onClick={resetFilters}>
-          Reset Filters
-        </Button>
-      </Box>
-      {/* Scrollable wrapper for table */}
-      <Box sx={{ overflowX: 'auto', width: '100%' }}>
-        <Box sx={{ minWidth: 1200 }}>
-          <DataGrid
-            rows={rows}
-            columns={inquiryColumns}
-            getRowId={(row) => row.inquiryId}
-            paginationModel={{ pageSize: 10, page: 0 }}
-            pageSizeOptions={[10, 20, 50]}
-            loading={loading} // 🔥 this enables the DataGrid's built-in loading UI
-          />
-        </Box>
-
-
-      </Box>
-
-      {/* Modal for Technical Details */}
-      <Modal
-        open={openModal}
-        onClose={handleCloseModal}
-        aria-labelledby="technical-details-title"
-        aria-describedby="technical-details-description"
-      >
+    <>
+      {/* Full-screen Loader Overlay */}
+      {loading && (
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '90%',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            bgcolor: 'background.paper',
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
           }}
         >
-          <Typography id="technical-details-title" variant="h6" gutterBottom>
-            Technical Details
-          </Typography>
+          <CircularProgress size={80} thickness={5} />
+        </Box>
+      )}
 
-          {/* Custom Offer Header Table */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <table style={{ borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={cellStyle}>OFFER<br />NUMBER</th>
-                  <th style={cellStyle}>DATE</th>
-                  <th style={cellStyle}>PAGE</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={cellStyle}>40042673</td>
-                  <td style={cellStyle}>9.5.2025</td>
-                  <td style={cellStyle}>1</td>
-                </tr>
-              </tbody>
-            </table>
+      <Box mt={3}>
+        {/* Top bar with Add button */}
+        <Box display="flex" justifyContent="flex-start" mb={2}>
+          {/* Add Button */}
+          <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}
+          >
+            Add Inquiry
+          </Button>
+
+          <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}>
+            {/* Filters */}
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel shrink>Customer Type</InputLabel>
+              <Select
+                value={regionFilter}
+                onChange={customerTypeChange}
+                displayEmpty
+                renderValue={(selected) => selected === "" ? "All" : selected}             >
+                <MenuItem value="">All</MenuItem>
+                {customerTypeOptions.map((customerType) => (
+                  <MenuItem key={customerType} value={customerType}>
+                    {customerType}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel shrink>Region</InputLabel>
+              <Select
+                value={regionFilter}
+                onChange={handleRegionChange}
+                displayEmpty
+                renderValue={(selected) => selected === "" ? "All" : selected}             >
+                <MenuItem value="">All</MenuItem>
+                {regionOptions.map((region) => (
+                  <MenuItem key={region} value={region}>
+                    {region}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel shrink>Customer Name</InputLabel>
+              <Select
+                value={customerNameFilter}
+                onChange={customerNameChange}
+                displayEmpty
+                renderValue={(selected) => selected === "" ? "All" : selected}            >
+                <MenuItem value="">All</MenuItem>
+                {customerNameOptions.map((customerName) => (
+                  <MenuItem key={customerName} value={customerName}>
+                    {customerName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel shrink>Status</InputLabel>
+              <Select
+                value={statusFilter}
+                onChange={handleStatusChange}
+                displayEmpty
+                renderValue={(selected) => selected === "" ? "All" : selected}             >
+                <MenuItem value="">All</MenuItem>
+                {statusOptions.map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}></Box>
+          <Button variant="contained" color="primary" onClick={resetFilters}>
+            Reset Filters
+          </Button>
+        </Box>
+        {/* Scrollable wrapper for table */}
+        <Box sx={{ overflowX: 'auto', width: '100%' }}>
+          <Box sx={{ minWidth: 1200 }}>
+            <DataGrid
+              rows={rows}
+              columns={inquiryColumns}
+              getRowId={(row) => row.inquiryId}
+              paginationModel={{ pageSize: 10, page: 0 }}
+              pageSizeOptions={[10, 20, 50]}
+              loading={loading} // 🔥 this enables the DataGrid's built-in loading UI
+            />
           </Box>
 
 
-          <Box sx={{ width: '100%', mb: 2 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <tbody>
-                <tr>
-                  <td style={{ ...cellStyleHeader, width: '50%' }}>SHIP TO:</td>
-                  <td style={{ ...cellStyleHeader, width: '50%' }}>
-                    SOLD TO: Makharia Electricals Pvt Limited
-                  </td>
-                </tr>
-                <tr>
-                  <td style={cellStyleValue}>ATTENTION: Mr. Rajeshh. Makharia</td>
-                  <td style={cellStyleValue}>INQUIRY DATE: 5.5.2025</td>                </tr>
+        </Box>
 
-              </tbody>
-            </table>
-          </Box>
+        {/* Modal for Technical Details */}
+        <Modal
+          open={openModal}
+          onClose={handleCloseModal}
+          aria-labelledby="technical-details-title"
+          aria-describedby="technical-details-description"
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '90%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              bgcolor: 'background.paper',
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            <Typography id="technical-details-title" variant="h6" gutterBottom>
+              Offer Details
+            </Typography>
 
-          {/* Scrollable Technical Data Table */}
-          <Box sx={{ overflowX: 'auto' }}>
-            <Box
-              sx={{
-                minWidth: 1000,
-                '& .MuiDataGrid-root': {
-                  border: '2px solid black', // Outer border
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: '#f5f5f5',
-                  borderBottom: '2px solid black',
-                },
-                '& .MuiDataGrid-columnHeader': {
-                  border: '1px solid black',
-                  fontWeight: 'bold',
+            {/* Download Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={handleDownload}
+                startIcon={<PictureAsPdfIcon />}
+              >
+                Download PDF
+              </Button>
+            </Box>
+
+            {/* Custom Offer Header Table */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <table style={{ borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={cellStyle}>OFFER<br />NUMBER</th>
+                    <th style={cellStyle}>DATE</th>
+                    {/* <th style={cellStyle}>PAGE</th> */}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={cellStyle}>{formData.enquiryNo}</td>
+                    <td style={cellStyle}>{new Date().toLocaleDateString()}</td>
+                    {/* <td style={cellStyle}>1</td> */}
+                  </tr>
+                </tbody>
+              </table>
+            </Box>
+
+
+            <Box sx={{ width: '100%', mb: 2 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ ...cellStyleHeader, width: '50%' }}>SHIP TO: {formData.custAddress}</td>
+                    <td style={{ ...cellStyleHeader, width: '50%' }}>
+                      SOLD TO: {formData.customerName}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={cellStyleValue}>ATTENTION: {formData.salutation + formData.cpfirstName + formData.cplastName}</td>
+                    <td style={cellStyleValue}>INQUIRY DATE: {new Date(formData.enquiryDate).toLocaleDateString()}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </Box>
+
+            {/* Scrollable Technical Data Table */}
+            <Box sx={{ overflowX: 'auto' }}>
+              <Box
+                sx={{
+                  minWidth: 1000,
+                  '& .MuiDataGrid-root': {
+                    border: '2px solid black', // Outer border
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: '#f5f5f5',
+                    borderBottom: '2px solid black',
+                  },
+                  '& .MuiDataGrid-columnHeader': {
+                    border: '1px solid black',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                  },
+                  '& .MuiDataGrid-cell': {
+                    border: '1px solid black',
+                    fontSize: '14px',
+                    padding: '8px',
+                  },
+                  '& .MuiDataGrid-row': {
+                    borderBottom: '1px solid black',
+                  },
+                }}
+              >              <DataGrid
+                  rows={selectedTechnicalDetails}
+                  columns={technicalDetailsColumns}
+                  getRowId={(row) => row.id || row.rowIndex} // fallback if 'id' is missing
+                  autoHeight
+                  hideFooter
+                />
+              </Box>
+            </Box>
+            {/* Additional Notes Section */}
+            <Box mt={4}>
+              <Typography paragraph>
+                QUOTE INCLUDING SPECIAL OPTION "SPECIAL CABLE ENTRIES"SINCE REQUEST IS FOR 1xM25 + 1xM20 WHILE CEMP STANDARD CABLE ENTRY WOULD BE 1xM25 ONLY. CUSTOMER TO ADVISE IF SECOND ENTRY IS REQUIRED FOR AUXILIARIES (NOT REQUIRED SO NOT INCLUDED IN THE QUOTE) IE2 EFFICIENCY CONSIDERED ACCORDING TO ECODESIGN - ATEX CERTIFICATE REQUIRED BY YOUR RFQ.
+              </Typography>
+
+              <Typography variant="subtitle1"><strong>Note:</strong></Typography>
+              <ul style={{ paddingLeft: '20px', marginTop: 0 }}>
+                <li>18% GST Extra</li>
+                <li>Quoted price is Ex Nava sheva port, price includes sea freight and customs</li>
+                <li>Lead time – 8/10 weeks from the date of manufacturing clearance and after receiving advance + transit time to India (8 Weeks by Sea).</li>
+                <li>Payment: 30% advance, 20% against Manufacturing clearance, 20% against readiness date, and balance against PI once motor reaches India. LD not acceptable.</li>
+                <li>Marathon reserves the right to route the PO through an authorized channel partner during finalization.</li>
+              </ul>
+
+              <Box
+                sx={{
+                  border: '2px solid black',
+                  padding: 2,
+                  marginTop: 3,
+                  fontFamily: 'Arial, sans-serif',
                   fontSize: '14px',
-                },
-                '& .MuiDataGrid-cell': {
-                  border: '1px solid black',
-                  fontSize: '14px',
-                  padding: '8px',
-                },
-                '& .MuiDataGrid-row': {
-                  borderBottom: '1px solid black',
-                },
-              }}
-            >              <DataGrid
-                rows={selectedTechnicalDetails}
-                columns={technicalDetailsColumns}
-                getRowId={(row) => row.id || row.rowIndex} // fallback if 'id' is missing
-                autoHeight
-                hideFooter
-              />
+                }}
+              >
+                <p><strong>SHIP METHOD:</strong> NA</p>
+                <p><strong>WARRANTY:</strong> 12 MONTHS FROM DATE OF INSTALLATION OR 18 MONTHS FROM DATE OF INVOICE</p>
+                <p><strong>PACKAGING TYPE:</strong> WOODEN BOX SEA WORTHY PACKING</p>
+                <p><strong>VALIDITY OF OFFER:</strong> 15 Days</p>
+              </Box>
+            </Box>
+            {/* Close Button */}
+            <Box mt={2} textAlign="right">
+              <Button variant="contained" onClick={handleCloseModal}>
+                Close
+              </Button>
             </Box>
           </Box>
+        </Modal>
 
-
-          {/* Close Button */}
-          <Box mt={2} textAlign="right">
-            <Button variant="contained" onClick={handleDownload}>
-              Download
-            </Button>
-          </Box>
-          {/* Close Button */}
-          <Box mt={2} textAlign="right">
-            <Button variant="contained" onClick={handleCloseModal}>
-              Close
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
-
-      {/* Confirmation Dialog */}
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        title="Delete Inquiry"
-        content="Are you sure you want to delete this inquiry?"
-        onClose={handleCloseConfirmDialog}
-        onConfirm={handleConfirmDelete}
-      />
-    </Box>
+        {/* Confirmation Dialog */}
+        <ConfirmDialog
+          open={confirmDialogOpen}
+          title="Delete Inquiry"
+          content="Are you sure you want to delete this inquiry?"
+          onClose={handleCloseConfirmDialog}
+          onConfirm={handleConfirmDelete}
+        />
+      </Box>
+    </>
   );
 };
 

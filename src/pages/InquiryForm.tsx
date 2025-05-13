@@ -80,6 +80,7 @@ interface InquiryFormData {
     techicalDetailsMapping: MotorMapping[];
     uploadedFiles: uploadedFiles[];
 }
+
 enum ListOfValueType {
     Brand = 'brand',
     Frequency = 'frequency',
