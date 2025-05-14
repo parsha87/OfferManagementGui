@@ -188,7 +188,7 @@ const Dashboard = () => {
     { field: 'brand', headerName: 'Brand', width: 100 },
     { field: 'application', headerName: 'Application', width: 150 },
     { field: 'segment', headerName: 'Segment', width: 120 },
-    { field: 'narration', headerName: 'Narration', width: 200 },
+    { field: 'narration', headerName: 'Product Description', width: 200 },
     { field: 'amount', headerName: 'Amount', width: 100 },
   ];
 

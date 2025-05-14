@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, TableContainer, InputAdornment, } from '@mui/material';
+import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, TableContainer, InputAdornment, CardActions, Paper, SelectChangeEvent, } from '@mui/material';
 import { Edit, Delete, NewLabel } from '@mui/icons-material';
 import api from '../context/AxiosContext';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -44,6 +44,7 @@ export interface MotorMapping {
     narration: string;
     amount: string;
     deliveryTime: string;
+    startType: string;
 }
 
 interface InquiryFormData {
@@ -79,6 +80,7 @@ interface InquiryFormData {
     custEmail: string;
     techicalDetailsMapping: MotorMapping[];
     uploadedFiles: uploadedFiles[];
+    visitSection: VisitSectionForm[];
 }
 
 enum ListOfValueType {
@@ -99,6 +101,14 @@ type uploadedFiles = {
     fileObject: File;
     originalFileName: string;
 };
+
+interface VisitSectionForm {
+    visitSectionId: number;
+    inquiryId: number;
+    visitDate: string;
+    visitReason: string;
+    visitKeyPoints: string;
+}
 
 const InquiryForm = () => {
     const { id } = useParams();
@@ -166,7 +176,8 @@ const InquiryForm = () => {
         segment: "",
         narration: "",
         amount: "",
-        deliveryTime: ''
+        deliveryTime: '',
+        startType: "",
     });
 
     const [formData, setFormData] = useState<InquiryFormData>({
@@ -202,6 +213,7 @@ const InquiryForm = () => {
         custEmail: '',
         techicalDetailsMapping: [],
         uploadedFiles: [], // ✅ no error now
+        visitSection: []
     });
 
     const [formDataAll, setFormDataAll] = useState<InquiryFormData>({
@@ -237,6 +249,7 @@ const InquiryForm = () => {
         custEmail: '',
         techicalDetailsMapping: [],
         uploadedFiles: [], // ✅ no error now
+        visitSection: [],
     });
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
@@ -244,6 +257,7 @@ const InquiryForm = () => {
     const customerTypeOptions = ['Domestic', 'Export'];
     // Define the motor type options
     const motorTypeOptions = ['LT', 'HT'];
+    const startTypeOptions = ['New', 'Old'];
     const regionOptions = ['North', 'South', 'East', 'West'];
     const stateOptions = [
         'Andhra Pradesh',
@@ -323,6 +337,19 @@ const InquiryForm = () => {
     const tempRiseOptionsH = ['Limited to Class B', 'Limited to Class F', 'Limited to Class H'];
     const yesNoOptions = ['Yes', 'No'];
     const encoderScopeOptions = ['Customer Scope', 'Manufacturer Scope'];
+
+    const [openProductDes, setOpenProductDes] = useState(false);
+    const [formDataProductDes, setFormDataProductDes] = useState({
+        visitSectionId: 0,
+        inquiryId: 0,
+        visitDate: '',
+        visitReason: '',
+        visitKeyPoints: '',
+    });
+    const [productDesList, setProductDesList] = useState<VisitSectionForm[]>([]);
+
+    const [editIndexVisit, setEditIndexVisit] = useState(null);
+
 
     useEffect(() => {
         fetchCustomers();
@@ -593,7 +620,9 @@ const InquiryForm = () => {
             segment: "",
             narration: "",
             amount: "",
-            deliveryTime: ''
+            deliveryTime: '',
+            startType: "",
+
         });
         setOpenModal(false);
     };
@@ -635,7 +664,9 @@ const InquiryForm = () => {
             segment: "",
             narration: "",
             amount: "",
-            deliveryTime: ''
+            deliveryTime: "",
+            startType: "",
+
         });
         setOpenModal(true);
     };
@@ -645,11 +676,22 @@ const InquiryForm = () => {
     //     setEditIndex(index); // Set the index of the row being edited
     // };
 
+
+
     const handleEditBrand = (index: any) => {
         const selected = formData.techicalDetailsMapping[index];
         setBrandInput({ ...selected }); // pre-fill modal form
         setEditIndex(index);            // track edit mode
         setOpenModal(true);
+    };
+
+
+    const handleEditVisitSection = (index: any) => {
+        const selected = formData.visitSection[index];
+        selected.visitDate = selected.visitDate.split('T')[0]; // Format date to YYYY-MM-DD
+        setFormDataProductDes({ ...selected }); // pre-fill modal form
+        setEditIndexVisit(index);            // track edit mode
+        setOpenProductDes(true);
     };
 
     const handleDeleteDialogOpen = (index: any) => {
@@ -907,6 +949,88 @@ const InquiryForm = () => {
                 console.error("Error downloading file:", error);
             });
     };
+
+
+    const handleChangeProductDes = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormDataProductDes({ ...formDataProductDes, [e.target.name]: e.target.value });
+    };
+
+
+    const handleOpenProductDes = () => setOpenProductDes(true);
+    const handleCloseProductDes = () => setOpenProductDes(false);
+    // const handleSubmitProductDes = () => {
+    //     setProductDesList([...productDesList, formDataProductDes]);
+    //     setFormDataProductDes({ date: '', reason: '', narration: '', keyPoints: '' }); // Clear form 
+    //     setOpenProductDes(false); // Close dialog
+    // };
+
+
+    const handleSubmitVistDes = () => {
+        if (!formDataProductDes.visitDate || !formDataProductDes.visitReason) {
+            toast.error('Date and Reason are required.');
+            return;
+        }
+
+        if (editIndexVisit !== null) {
+            // Update existing row in formData.visitSection
+            setFormData((prevData: any) => {
+                const updatedVisitSection = [...prevData.visitSection];
+                updatedVisitSection[editIndexVisit] = { ...formDataProductDes }; // Update the specific row
+
+                return {
+                    ...prevData,
+                    visitSection: updatedVisitSection,
+                };
+            });
+
+            // Update productDesList as well if it's used for displaying
+            setProductDesList((prevList) => {
+                const updatedList = [...prevList];
+                updatedList[editIndexVisit] = { ...formDataProductDes };
+                return updatedList;
+            });
+
+            setEditIndexVisit(null); // Reset edit mode
+        }
+        else {
+            // Add new row to form data
+            setFormData((prevData: any) => {
+                const updatedVisitSection = [...prevData.visitSection, { ...formDataProductDes }];
+                return {
+                    ...prevData,
+                    visitSection: updatedVisitSection,
+                };
+            });
+
+            // Add to local UI list
+            setProductDesList((prevList) => [...prevList, { ...formDataProductDes }]);
+        }
+
+        // Reset form
+        setFormDataProductDes({
+            visitSectionId: 0,
+            inquiryId: 0,
+            visitDate: '',
+            visitReason: '',
+            visitKeyPoints: '',
+        });
+
+        setOpenProductDes(false);
+    };
+
+
+    const handleChangeVisitReson = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
+    ) => {
+        const { name, value } = e.target;
+        setFormDataProductDes((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+
+
 
 
     const handleSubmitCust = async () => {
@@ -1312,7 +1436,7 @@ const InquiryForm = () => {
                                                     <TableCell>Segment</TableCell>
                                                     <TableCell>Amount</TableCell>
                                                     <TableCell>Total Amt</TableCell>
-                                                    <TableCell>Narration</TableCell>
+                                                    <TableCell>Product Description</TableCell>
                                                     <TableCell>Delivery TIme</TableCell>
 
                                                 </TableRow>
@@ -1580,6 +1704,109 @@ const InquiryForm = () => {
                 </CardContent>
             </Card>
 
+            <Card>
+                <CardContent>
+                    <SectionHeader title="Visit Section" />
+                    <Grid container spacing={0}>
+                        <Grid size={{ xs: 2 }}>
+                            <Button variant="contained" onClick={handleOpenProductDes}>
+                                Add Visit
+                            </Button>
+                        </Grid>
+                    </Grid>
+                    {formData.visitSection.length > 0 && (
+                        <TableContainer component={Paper}>
+                            <Table size="small">
+                                <TableHead>
+
+                                    <TableRow>
+                                        <TableCell>Actions</TableCell>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Reason</TableCell>
+                                        <TableCell>Key Points</TableCell>
+                                    </TableRow>
+
+
+                                </TableHead>
+                                <TableBody>
+                                    {formData.visitSection.map((entry, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell><Button
+                                                color="primary"
+                                                onClick={() => handleEditVisitSection(index)}
+                                                startIcon={<Edit />}
+                                            >
+                                            </Button></TableCell>
+                                            <TableCell>{entry.visitDate?.split('T')[0]}</TableCell>
+                                            <TableCell>{entry.visitReason}</TableCell>
+                                            <TableCell>{entry.visitKeyPoints}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </CardContent>
+            </Card>
+
+
+            <Dialog open={openProductDes} onClose={handleCloseProductDes} maxWidth="sm" fullWidth>
+                <DialogTitle>Enter Details</DialogTitle>
+                <DialogContent dividers>
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        name="visitDate"
+                        type="date"
+                        label="Date"
+                        InputLabelProps={{ shrink: true }}
+                        value={formDataProductDes.visitDate}
+                        onChange={handleChangeProductDes}
+                    />
+                    {/* <TextField
+                        fullWidth
+                        margin="normal"
+                        name="reason"
+                        label="Reason"
+                        value={formDataProductDes.reason}
+                        onChange={handleChangeProductDes}
+                    /> */}
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Reason</InputLabel>
+                        <Select
+                            name="visitReason"
+                            value={formDataProductDes.visitReason}
+                            label="Reason"
+                            onChange={handleChangeVisitReson}
+                        >
+                            <MenuItem value="">
+                                <em>None</em>
+                            </MenuItem>
+                            <MenuItem value="Pricing Issue">Pricing Issue</MenuItem>
+                            <MenuItem value="Technical Mismatch">Technical Mismatch</MenuItem>
+                            <MenuItem value="Customer Postponed">Customer Postponed</MenuItem>
+                            <MenuItem value="Lost to Competitor">Lost to Competitor</MenuItem>
+                            {/* Add more options as needed */}
+                        </Select>
+                    </FormControl>
+
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        name="visitKeyPoints"
+                        label="Key Points"
+                        multiline
+                        rows={2}
+                        value={formDataProductDes.visitKeyPoints}
+                        onChange={handleChangeProductDes}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseProductDes}>Cancel</Button>
+                    <Button onClick={handleSubmitVistDes} variant="contained">Submit</Button>
+                </DialogActions>
+            </Dialog>
+
 
 
             <Card>
@@ -1701,7 +1928,7 @@ const InquiryForm = () => {
                 }}>Technical Details</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2} sx={{ mt: 1, mb: 2 }}>
-                        <Grid size={{ xs: 12, sm: 4 }} >
+                        <Grid size={{ xs: 12, sm: 2 }} >
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Motor Type</InputLabel>
                                 <Select
@@ -1763,6 +1990,23 @@ const InquiryForm = () => {
                                 options={poleOptions}
                                 onChange={handleBrandChange}
                             />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 2 }} >
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel>Type of Start</InputLabel>
+                                <Select
+                                    label="Type of Start"
+                                    name="startType"
+                                    value={brandInput.startType}
+                                    onChange={handleBrandChange}
+                                >
+                                    {startTypeOptions.map((option) => (
+                                        <MenuItem key={option} value={option}>
+                                            {option}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </Grid>
 
                         {/* Frame Size */}
@@ -2193,7 +2437,7 @@ const InquiryForm = () => {
                         <Grid size={{ xs: 12 }} >
                             <TextField
                                 fullWidth
-                                label="Narration"
+                                label="Product Description"
                                 name="narration"
                                 value={brandInput.narration}
                                 onChange={handleBrandChange}
