@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Resp
 import config from '../config';
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Button, Stack, Box, Modal, Typography, DialogActions, DialogTitle, Dialog, DialogContent, DialogContentText, IconButton, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
+import { Button, Stack, Box, Modal, Typography, DialogActions, DialogTitle, Dialog, DialogContent, DialogContentText, IconButton, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Grid, CardContent, Card } from '@mui/material';
 import api from '../context/AxiosContext';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from './ConfirmDialog';
@@ -32,16 +32,39 @@ const Dashboard = () => {
   const [selectedInquiryId, setSelectedInquiryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
+  const [offerStatusFilter, setOfferStatusFilter] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [customerNameFilter, setCustomerNameFilter] = useState('');
   const [customerTypeFilter, setCustomerTypeFilter] = useState('');
-  const [fromDateFilter, setFromDateFilter] = useState('');
-  const [toDateFilter, setToDateFilter] = useState('');
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
+
+  const firstDay = new Date(currentYear, currentMonth - 2, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+
+  // Format to YYYY-MM-DD in local time (not UTC!)
+  const formatDate = (date: Date) =>
+    new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split('T')[0];
+
+  const [fromDateFilter, setFromDateFilter] = useState(formatDate(firstDay));
+  const [toDateFilter, setToDateFilter] = useState(formatDate(lastDay));
+
+  // const [fromDateFilter, setFromDateFilter] = useState('');
+  // const [toDateFilter, setToDateFilter] = useState('');
 
   const statusOptions = ['Draft', 'Offer Sent', 'Approved', 'Closed'];
   const regionOptions = ['North', 'South', 'East', 'West'];
-  const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]); // Use useState to store the options
-  const [customerTypeOptions, setCustomerTypeOptions] = useState<string[]>([]); // Use useState to store the options
+  const offerStatusOptions = ['Budgetary', "Live", 'Won', 'Lost', 'Hold'];
+  const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]);
+  const [customerTypeOptions, setCustomerTypeOptions] = useState<string[]>([]);
+  // const [monthlyData, setMonthlyData] = useState<{ name: string; value: number }[]>([]);
+  const [monthlyStatusData, setMonthlyStatusData] = useState<any[]>([]);
+  const [monthlyOfferStatusData, setMonthlyOfferStatusData] = useState<any[]>([]);
+
 
   useEffect(() => {
     fetchData();
@@ -49,7 +72,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [statusFilter, regionFilter, customerNameFilter, customerTypeFilter, fromDateFilter, toDateFilter, rowsAll]);
+  }, [statusFilter, regionFilter, customerNameFilter, customerTypeFilter, fromDateFilter, toDateFilter, offerStatusFilter, rowsAll]);
+
+  useEffect(() => {
+    filterByDateOnly();
+  }, [fromDateFilter, toDateFilter, rowsAll]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -59,31 +86,13 @@ const Dashboard = () => {
       const uniqueCustomerNames = [
         ...new Set((inquiries as { customerName: string }[]).map((row) => row.customerName)),
       ];
-      setCustomerNameOptions(uniqueCustomerNames); // Use setCustomerNameOptions to update the options
+      setCustomerNameOptions(uniqueCustomerNames);
       const uniqueCustomerTypes = [
         ...new Set((inquiries as { customerType: string }[]).map((row) => row.customerType)),
       ];
-      setCustomerTypeOptions(uniqueCustomerTypes); // Use setCustomerNameOptions to update the options
+      setCustomerTypeOptions(uniqueCustomerTypes);
       setRowsAll(inquiries);
-
-      // Group by status
-      const statusCounts: Record<string, number> = {};
-      const customerTypeCounts: Record<string, number> = {};
-
-      for (const inquiry of inquiries) {
-        const status = inquiry.status || 'Unknown';
-        const customerType = inquiry.customerType || 'Unknown';
-
-        statusCounts[status] = (statusCounts[status] || 0) + 1;
-        customerTypeCounts[customerType] = (customerTypeCounts[customerType] || 0) + 1;
-      }
-
-      setStatusData(
-        Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
-      );
-      setCustomerTypeData(
-        Object.entries(customerTypeCounts).map(([name, value]) => ({ name, value }))
-      );
+      updateChartData(inquiries); // Initialize charts with all data
     } catch (error) {
       console.error('Failed to fetch inquiries:', error);
     } finally {
@@ -91,257 +100,414 @@ const Dashboard = () => {
     }
   };
 
+  const updateChartData = (data: any[]) => {
+    // Group by status
+    const statusCounts: Record<string, number> = {};
+    const customerTypeCounts: Record<string, number> = {};
+
+    for (const inquiry of data) {
+      const status = inquiry.status || 'Unknown';
+      const customerType = inquiry.customerType || 'Unknown';
+
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+      customerTypeCounts[customerType] = (customerTypeCounts[customerType] || 0) + 1;
+    }
+
+    setStatusData(
+      Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
+    );
+    setCustomerTypeData(
+      Object.entries(customerTypeCounts).map(([name, value]) => ({ name, value }))
+    );
+  };
+
   const applyFilters = () => {
-    let filtered = [...rowsAll]; // Start with all rows.
+    let filtered = [...rowsAll];
 
     // Apply filters based on the selected criteria
     if (statusFilter) filtered = filtered.filter(r => r.status === statusFilter);
+    if (offerStatusFilter) filtered = filtered.filter(r => r.offerStatus === offerStatusFilter);
     if (regionFilter) filtered = filtered.filter(r => r.region === regionFilter);
     if (customerNameFilter) filtered = filtered.filter(r => r.customerName === customerNameFilter);
+    if (customerTypeFilter) filtered = filtered.filter(r => r.customerType === customerTypeFilter);
     if (fromDateFilter) filtered = filtered.filter(item => new Date(item.enquiryDate) >= new Date(fromDateFilter));
     if (toDateFilter) filtered = filtered.filter(item => new Date(item.enquiryDate) <= new Date(toDateFilter));
 
-    setRows(filtered); // Update the rows with the filtered data.
+    setRows(filtered);
+    updateChartData(filtered);
+    updateMonthlyOfferStatusData(filtered);
+    updateMonthlyStatusData(filtered);
+
+
   };
-  // Make sure to call applyFilters whenever a filter changes:
+
+  const filterByDateOnly = () => {
+    let filtered = [...rowsAll];
+
+    if (fromDateFilter)
+      filtered = filtered.filter(item => new Date(item.enquiryDate) >= new Date(fromDateFilter));
+
+    if (toDateFilter)
+      filtered = filtered.filter(item => new Date(item.enquiryDate) <= new Date(toDateFilter));
+
+    updateChartData(filtered);
+  };
+
+
   const handleStatusChange = (e: SelectChangeEvent) => {
-    setStatusFilter(e.target.value); // Update the filter value.
-    applyFilters(); // Apply the filter immediately after changing the value.
+    setStatusFilter(e.target.value);
+  };
+
+  const handleOfferStatusChange = (e: SelectChangeEvent) => {
+    setOfferStatusFilter(e.target.value);
   };
 
   const handleRegionChange = (e: SelectChangeEvent) => {
-    setRegionFilter(e.target.value); // Update the filter value.
-    applyFilters(); // Apply the filter immediately after changing the value.
+    setRegionFilter(e.target.value);
   };
 
   const customerNameChange = (e: SelectChangeEvent) => {
-    setCustomerNameFilter(e.target.value); // Update the filter value.
-    applyFilters(); // Apply the filter immediately after changing the value.
+    setCustomerNameFilter(e.target.value);
   };
 
   const customerTypeChange = (e: SelectChangeEvent) => {
-    setCustomerTypeFilter(e.target.value); // Update the filter value.
-    applyFilters(); // Apply the filter immediately after changing the value.
+    setCustomerTypeFilter(e.target.value);
   };
 
   const fromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFromDateFilter(e.target.value);
-    applyFilters();
   };
 
   const toDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setToDateFilter(e.target.value);
-    applyFilters();
   };
-
 
   const resetFilters = () => {
     setStatusFilter('');
+    setOfferStatusFilter('');
     setRegionFilter('');
     setCustomerNameFilter('');
     setCustomerTypeFilter('');
     setFromDateFilter('');
     setToDateFilter('');
-    setRows(rowsAll); // reset table data to original
+    setRows(rowsAll);
+    updateChartData(rowsAll); // Reset charts to show all data
   };
-
 
   const inquiryColumns: GridColDef[] = [
-    // { field: 'inquiryId', headerName: 'Inquiry ID', width: 120 },
-    { field: 'customerType', headerName: 'Customer Type', width: 150 },
-    { field: 'customerName', headerName: 'Customer Name', width: 180 },
-    { field: 'region', headerName: 'Region', width: 120 },
-    { field: 'city', headerName: 'City', width: 120 },
+    { field: 'customerType', headerName: 'Customer Type', width: 110 },
+    { field: 'customerName', headerName: 'Customer Name', width: 150 },
+    // { field: 'region', headerName: 'Region', width: 120 },
+    // { field: 'city', headerName: 'City', width: 120 },
     { field: 'enquiryNo', headerName: 'Enquiry No', width: 150 },
-    { field: 'enquiryDate', headerName: 'Enquiry Date', width: 150 },
-    { field: 'rfqNo', headerName: 'RFQ No', width: 150 },
-    { field: 'rfqDate', headerName: 'RFQ Date', width: 150 },
-    // { field: 'stdPaymentTerms', headerName: 'Payment Terms', width: 150 },
-    // { field: 'stdIncoTerms', headerName: 'Inco Terms', width: 150 },
-    // { field: 'listPrice', headerName: 'List Price', width: 120 },
-    // { field: 'discount', headerName: 'Discount', width: 120 },
-    // { field: 'netPriceWithoutGST', headerName: 'Net Price (no GST)', width: 150 },
-    // { field: 'totalPackage', headerName: 'Total Package', width: 150 },
-    { field: 'status', headerName: 'Status', width: 120 },
-    // { field: 'createdBy', headerName: 'Created By', width: 150 },
-    // { field: 'createdOn', headerName: 'Created On', width: 150 },
-    // { field: 'updatedBy', headerName: 'Updated By', width: 150 },
-    // { field: 'updatedOn', headerName: 'Updated On', width: 150 },
-
-  ];
-
-  const technicalDetailsColumns: GridColDef[] = [
-    { field: 'motorType', headerName: 'Motor Type', width: 130 },
-    { field: 'kw', headerName: 'KW', width: 80 },
-    { field: 'hp', headerName: 'HP', width: 80 },
-    { field: 'phase', headerName: 'Phase', width: 100 },
-    { field: 'pole', headerName: 'Pole', width: 80 },
-    { field: 'frameSize', headerName: 'Frame Size', width: 100 },
-    { field: 'dop', headerName: 'DOP', width: 100 },
-    { field: 'insulationClass', headerName: 'Insulation Class', width: 150 },
-    { field: 'efficiency', headerName: 'Efficiency', width: 120 },
-    { field: 'voltage', headerName: 'Voltage', width: 100 },
-    { field: 'frequency', headerName: 'Frequency', width: 100 },
-    { field: 'quantity', headerName: 'Quantity', width: 100 },
-    { field: 'mounting', headerName: 'Mounting', width: 100 },
-    { field: 'safeAreaHazardousArea', headerName: 'Safe Area/Hazardous', width: 180 },
-    { field: 'brand', headerName: 'Brand', width: 100 },
-    { field: 'application', headerName: 'Application', width: 150 },
-    { field: 'segment', headerName: 'Segment', width: 120 },
-    { field: 'narration', headerName: 'Product Description', width: 200 },
-    { field: 'amount', headerName: 'Amount', width: 100 },
-  ];
-
-
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedTechnicalDetails([]);
-  };
-  // Create an Axios instance
-  const api = axios.create({
-    baseURL: config.apiUrl,
-    headers: {
-      'Content-Type': 'application/json',
+    {
+      field: 'enquiryDate', headerName: 'Enquiry Date', valueFormatter: (params) => {
+        const date = new Date(params);
+        if (isNaN(date.getTime())) return ''; // handle invalid date
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      }, width: 150
     },
-  });
+    { field: 'rfqNo', headerName: 'RFQ No', width: 150 },
+    {
+      field: 'rfqDate', headerName: 'RFQ Date', valueFormatter: (params) => {
+        const date = new Date(params);
+        if (isNaN(date.getTime())) return ''; // handle invalid date
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      }, width: 150
+    },
+    {
+      field: 'totalPackage', headerName: 'Total Package', valueFormatter: (params) => {
+        const value = Number(params);
+        return isNaN(value)
+          ? ''
+          : value.toLocaleString('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 2,
+          });
+      }, width: 150
+    },
+    { field: 'status', headerName: 'Inquiry Status', width: 100 },
+    { field: 'offerStatus', headerName: 'Offer Status', width: 100 },
+  ];
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+
+
+  const updateMonthlyStatusData = (data: any[]) => {
+    // Create a map from month-year to status counts
+    const monthlyMap: Record<string, Record<string, number>> = {};
+
+    data.forEach(inquiry => {
+      const date = new Date(inquiry.enquiryDate);
+      if (!isNaN(date.getTime())) {
+        const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        if (!monthlyMap[monthYear]) {
+          monthlyMap[monthYear] = {};
+        }
+        const status = inquiry.status || 'Unknown';
+        monthlyMap[monthYear][status] = (monthlyMap[monthYear][status] || 0) + 1;
+      }
+    });
+
+    // Convert monthlyMap to array format
+    const result = Object.entries(monthlyMap).map(([monthYear, statusCounts]) => {
+      return {
+        name: monthYear,
+        ...statusCounts,
+      };
+    });
+
+    // Sort by date ascending
+    result.sort((a, b) => {
+      const dateA = new Date(a.name);
+      const dateB = new Date(b.name);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    setMonthlyStatusData(result);
+  };
+
+  const updateMonthlyOfferStatusData = (data: any[]) => {
+    // Create a map from month-year to status counts
+    const monthlyMap: Record<string, Record<string, number>> = {};
+
+    data.forEach(inquiry => {
+      const date = new Date(inquiry.enquiryDate);
+      if (!isNaN(date.getTime())) {
+        const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        if (!monthlyMap[monthYear]) {
+          monthlyMap[monthYear] = {};
+        }
+        const status = inquiry.offerStatus || 'Unknown';
+        monthlyMap[monthYear][status] = (monthlyMap[monthYear][status] || 0) + 1;
+      }
+    });
+
+    // Convert monthlyMap to array format
+    const result = Object.entries(monthlyMap).map(([monthYear, statusCounts]) => {
+      return {
+        name: monthYear,
+        ...statusCounts,
+      };
+    });
+
+    // Sort by date ascending
+    result.sort((a, b) => {
+      const dateA = new Date(a.name);
+      const dateB = new Date(b.name);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    setMonthlyStatusData(result);
+    setMonthlyOfferStatusData(result)
+  };
+
+
 
   return (
     <div>
       <Box mt={3}>
         {/* Top bar with Add button */}
+
         <Box display="flex" justifyContent="flex-start" mb={2}>
-          {/* Add Button */}
-          {/* <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}
-          >
-            Add Inquiry
-          </Button> */}
+          <Card sx={{ mt: '6px' }}>
+            <CardContent>
+              <Box display="flex" flexWrap="nowrap" alignItems="center" gap={1}>
+                {/* Filters */}
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel shrink>Customer Type</InputLabel>
+                  <Select
+                    value={customerTypeFilter}
+                    onChange={customerTypeChange}
+                    displayEmpty
+                    label="Customer Type"
+                    renderValue={(selected) => selected === "" ? "All" : selected}
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    {customerTypeOptions.map((customerType) => (
+                      <MenuItem key={customerType} value={customerType}>
+                        {customerType}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-          <Box display="flex" flexWrap="wrap" alignItems="center" gap={1} ml={1}>
-            {/* Filters */}
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel shrink>Customer Type</InputLabel>
-              <Select
-                value={customerTypeFilter}
-                onChange={customerTypeChange}
-                displayEmpty
-                renderValue={(selected) => selected === "" ? "All" : selected}             >
-                <MenuItem value="">All</MenuItem>
-                {customerTypeOptions.map((customerType) => (
-                  <MenuItem key={customerType} value={customerType}>
-                    {customerType}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel shrink>Region</InputLabel>
-              <Select
-                value={regionFilter}
-                onChange={handleRegionChange}
-                displayEmpty
-                renderValue={(selected) => selected === "" ? "All" : selected}             >
-                <MenuItem value="">All</MenuItem>
-                {regionOptions.map((region) => (
-                  <MenuItem key={region} value={region}>
-                    {region}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel shrink>Customer Name</InputLabel>
-              <Select
-                value={customerNameFilter}
-                onChange={customerNameChange}
-                displayEmpty
-                renderValue={(selected) => selected === "" ? "All" : selected}            >
-                <MenuItem value="">All</MenuItem>
-                {customerNameOptions.map((customerName) => (
-                  <MenuItem key={customerName} value={customerName}>
-                    {customerName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel shrink>Region</InputLabel>
+                  <Select
+                    value={regionFilter}
+                    onChange={handleRegionChange}
+                    displayEmpty
+                    label="Region"
+                    renderValue={(selected) => selected === "" ? "All" : selected}
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    {regionOptions.map((region) => (
+                      <MenuItem key={region} value={region}>
+                        {region}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel shrink>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={handleStatusChange}
-                displayEmpty
-                renderValue={(selected) => selected === "" ? "All" : selected}             >
-                <MenuItem value="">All</MenuItem>
-                {statusOptions.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel shrink>Customer Name</InputLabel>
+                  <Select
+                    value={customerNameFilter}
+                    onChange={customerNameChange}
+                    displayEmpty
+                    label="Customer Name"
+                    renderValue={(selected) => selected === "" ? "All" : selected}
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    {customerNameOptions.map((customerName) => (
+                      <MenuItem key={customerName} value={customerName}>
+                        {customerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-            <TextField
-              label="From Date"
-              type="date"
-              size="small"
-              value={fromDateFilter}
-              onChange={fromDateChange}
-              InputLabelProps={{ shrink: true }}
-            />
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel shrink>Status</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    onChange={handleStatusChange}
+                    displayEmpty
+                    label="Inquiry Status"
+                    renderValue={(selected) => selected === "" ? "All" : selected}
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    {statusOptions.map((status) => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-            <TextField
-              label="To Date"
-              type="date"
-              size="small"
-              value={toDateFilter}
-              onChange={toDateChange}
-              InputLabelProps={{ shrink: true }}
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel shrink>Offer Status</InputLabel>
+                  <Select
+                    value={offerStatusFilter}
+                    onChange={handleOfferStatusChange}
+                    displayEmpty
+                    label="Offer Status"
+                    renderValue={(selected) => selected === "" ? "All" : selected}
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    {offerStatusOptions.map((status) => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-            />
-          </Box>
+                <TextField
+                  label="From Date"
+                  type="date"
+                  size="small"
+                  value={fromDateFilter}
+                  onChange={fromDateChange}
+                  InputLabelProps={{ shrink: true }}
+                />
 
-          <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}></Box>
-          <Button variant="contained" color="primary" onClick={resetFilters}>
-            Reset Filters
-          </Button>
+                <TextField
+                  label="To Date"
+                  type="date"
+                  size="small"
+                  value={toDateFilter}
+                  onChange={toDateChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <Button variant="contained" color="primary" onClick={resetFilters}>Reset</Button>
+              </Box>
+
+              {/* <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}></Box> */}
+              {/* <Button variant="contained" color="primary" onClick={resetFilters}>
+                Reset Filters
+              </Button> */}
+            </CardContent>
+          </Card>
         </Box>
+
         {/* Scrollable wrapper for table */}
-        <Box sx={{ overflowX: 'auto', width: '100%' }}>
-          <Box sx={{ minWidth: 100 }}>
+        {/* <Box sx={{ overflowX: 'scroll', width: '90%' }}> */}
+        <Card sx={{ mt: '6px' }}>
+          <CardContent>
             <DataGrid
               rows={rows}
               columns={inquiryColumns}
               getRowId={(row) => row.inquiryId}
-              paginationModel={{ pageSize: 10, page: 0 }}
+              paginationModel={{ pageSize: 5, page: 0 }}
               pageSizeOptions={[10, 20, 50]}
-              loading={loading} // 🔥 this enables the DataGrid's built-in loading UI
+              loading={loading}
             />
-          </Box>
-
-
-        </Box>
-
+          </CardContent>
+        </Card>
+        {/* </Box> */}
       </Box>
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="shadow-lg p-4 rounded-xl bg-white">
-          <h2 className="text-xl font-bold mb-4">Inquiry Status</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={statusData}>
-              <XAxis dataKey="name" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#0088FE" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      <Grid container spacing={2}>
 
+        {/* Inquiry Status */}
+        <Grid size={{ xs: 12, sm: 6 }} >
+          <Card sx={{ mt: '6px' }}>
+            <CardContent>
+              <div className="shadow-lg p-1 rounded-xl bg-white flex-1">
+                <h2 className="text-xl font-bold mb-4">
+                  Monthly Inquiry Status
+                </h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={monthlyStatusData} >
+                    <XAxis dataKey="name" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    {statusOptions.map((status, idx) => (
+                      <Bar key={status} dataKey={status} stackId="a" fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </Grid>
+
+
+        {/* Offer Status */}
+        <Grid size={{ xs: 12, sm: 6 }} >
+          <Card sx={{ mt: '6px' }}>
+            <CardContent>
+              <div className="shadow-lg p-1 rounded-xl bg-white flex-1">
+                <h2 className="text-xl font-bold mb-4">Offer Status</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={monthlyOfferStatusData} >
+                    <XAxis dataKey="name" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    {offerStatusOptions.map((status, idx) => (
+                      <Bar key={status} dataKey={status} stackId="a" fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent></Card>
+        </Grid>
+      </Grid>
+
+
+      {/* Charts Section */}
+      <div className="p-6 grid grid-cols-2 gap-6">
         <div className="shadow-lg p-4 rounded-xl bg-white">
-          <h2 className="text-xl font-bold mb-4">Customer Type</h2>
+          <h2 className="text-xl font-bold mb-4">Customer Type ({rows.length} records)</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -351,13 +517,17 @@ const Dashboard = () => {
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               >
                 {customerTypeData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Legend />
-              <Tooltip />
+              <Tooltip
+                formatter={(value) => [`${value} records`, 'Count']}
+                labelFormatter={(label) => `Customer Type: ${label}`}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

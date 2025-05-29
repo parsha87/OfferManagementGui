@@ -177,7 +177,7 @@ const InquiryForm = () => {
         narration: "",
         amount: "",
         deliveryTime: '',
-        startType: "",
+        startType: "DOL",
     });
 
     const [formData, setFormData] = useState<InquiryFormData>({
@@ -257,7 +257,7 @@ const InquiryForm = () => {
     const customerTypeOptions = ['Domestic', 'Export'];
     // Define the motor type options
     const motorTypeOptions = ['LT', 'HT'];
-    const startTypeOptions = ['New', 'Old'];
+    const startTypeOptions = ['DOL', 'Star-Delta', 'Soft Start', 'VFD', 'LRS'];
     const regionOptions = ['North', 'South', 'East', 'West'];
     const stateOptions = [
         'Andhra Pradesh',
@@ -357,8 +357,10 @@ const InquiryForm = () => {
         if (id) {
             api.get(`Inquiry/${id}`).then(res => {
                 console.log(res)
-                setFormData(res.data)
-                setFormDataAll(res.data)
+                const data = res.data;
+                data.enquiryDate = new Date(data.enquiryDate);
+                setFormData(data);
+                setFormDataAll(data);
             });
         }
     }, [id]);
@@ -621,7 +623,7 @@ const InquiryForm = () => {
             narration: "",
             amount: "",
             deliveryTime: '',
-            startType: "",
+            startType: "DOL",
 
         });
         setOpenModal(false);
@@ -665,7 +667,7 @@ const InquiryForm = () => {
             narration: "",
             amount: "",
             deliveryTime: "",
-            startType: "",
+            startType: "DOL",
 
         });
         setOpenModal(true);
@@ -688,7 +690,7 @@ const InquiryForm = () => {
 
     const handleEditVisitSection = (index: any) => {
         const selected = formData.visitSection[index];
-        selected.visitDate = selected.visitDate.split('T')[0]; // Format date to YYYY-MM-DD
+        selected.visitDate = selected.visitDate; // Format date to YYYY-MM-DD
         setFormDataProductDes({ ...selected }); // pre-fill modal form
         setEditIndexVisit(index);            // track edit mode
         setOpenProductDes(true);
@@ -1091,7 +1093,11 @@ const InquiryForm = () => {
                                 label="Enquiry Date"
                                 name="enquiryDate"
                                 type="date"
-                                value={formData.enquiryDate}
+                                // value={formData.enquiryDate}
+                                value={
+                                    formData.enquiryDate
+                                        ? new Date(formData.enquiryDate).toISOString().split('T')[0]
+                                        : ''}
                                 onChange={handleChange}
                                 slotProps={{
                                     inputLabel: {

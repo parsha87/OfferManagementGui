@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridCloseIcon, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Button, Stack, Box, Modal, Typography, DialogActions, DialogTitle, Dialog, DialogContent, DialogContentText, IconButton, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import api from '../context/AxiosContext';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,10 @@ import html2canvas from "html2canvas";
 import html2pdf from 'html2pdf.js';
 import { MotorMapping } from './InquiryForm';
 import CircularProgress from '@mui/material/CircularProgress'; // MUI Loader component
+import SectionHeader from './SectionHeader';
+import marathon from '../assets/marathon.png';
+import weg from '../assets/weg.png';
+
 
 
 
@@ -109,6 +113,20 @@ const InquiryGrid = () => {
 
   // const printRef = useRef<HTMLDivElement>(null);
 
+  const imageList = [
+    'marathon.png',
+    'weg.png',
+    'cemp.png',
+    'bharatbijlee.jpg',
+    'wolong.png',
+    'offerImage.jpg',
+    'wolongatb.png',
+    'brookcromton.png',
+    'General_Electric_logo.svg.png',
+    'kirloskar.jpg',
+    'hindustanelectric.jpeg',
+    'schorch.jpeg',
+  ];
 
   const [formDataAll, setFormDataAll] = useState<InquiryFormData>({
     inquiryId: 0,
@@ -411,8 +429,8 @@ const InquiryGrid = () => {
       ),
     },
     // { field: 'inquiryId', headerName: 'Inquiry ID', width: 120 },
-    { field: 'customerType', headerName: 'Customer Type', width: 150 },
-    { field: 'customerName', headerName: 'Customer Name', width: 180 },
+    { field: 'customerType', headerName: 'Customer Type', width: 130 },
+    { field: 'customerName', headerName: 'Customer Name', width: 150 },
     { field: 'enquiryNo', headerName: 'Enquiry No', width: 150 },
     {
       field: 'enquiryDate',
@@ -492,15 +510,30 @@ const InquiryGrid = () => {
     // { field: 'brand', headerName: 'Brand', width: 100 },
     // { field: 'application', headerName: 'Application', width: 150 },
     // { field: 'segment', headerName: 'Segment', width: 120 },
-    { field: "rowIndex", headerName: "Sr.No.", width: 100 },
+    { field: "rowIndex", headerName: "Sr.No.", width: 130 },
     { field: 'narration', headerName: 'Product Description', width: 300 },
     { field: 'deliveryTime', headerName: 'Delivery Time', width: 300 },
+    { field: 'quantity', headerName: 'Quantity', width: 160 },
+    { field: 'amount', headerName: 'Unit Price (INR) ', width: 160 },
+    { field: "totalAmount", headerName: "Total Amount (INR)", width: 160 }
+  ];
+
+  const technicalDetailsColumnsAll: GridColDef[] = [
+    { field: "rowIndex", headerName: "Sr.No.", width: 100 },
+    { field: 'motorType', headerName: 'Motor Type', width: 130 },
+    { field: 'kw', headerName: 'KW', width: 80 },
+    { field: 'hp', headerName: 'HP', width: 80 },
+    { field: 'phase', headerName: 'Phase', width: 100 },
+    { field: 'pole', headerName: 'Pole', width: 100 },
+    { field: 'frameSize', headerName: 'Frame Size', width: 100 },
+    { field: 'dop', headerName: 'DOP', width: 100 },
+    { field: 'insulationClass', headerName: 'Insulation Class', width: 150 },
     { field: 'quantity', headerName: 'Quantity', width: 170 },
-    { field: 'amount', headerName: 'Unit Price (INR) ', width: 180 },
-    { field: "totalAmount", headerName: "Total Amount (INR)", width: 180 }
+    { field: 'brand', headerName: 'Brand', width: 100 },
   ];
 
   return (
+
     <>
       {/* Full-screen Loader Overlay */}
       {loading && (
@@ -536,7 +569,9 @@ const InquiryGrid = () => {
             <FormControl size="small" sx={{ minWidth: 150 }}>
               <InputLabel shrink>Customer Type</InputLabel>
               <Select
-                value={regionFilter}
+                label="Customer Type"
+                name="customerType"
+                value={customerTypeFilter}
                 onChange={customerTypeChange}
                 displayEmpty
                 renderValue={(selected) => selected === "" ? "All" : selected}             >
@@ -554,6 +589,8 @@ const InquiryGrid = () => {
                 value={regionFilter}
                 onChange={handleRegionChange}
                 displayEmpty
+                label="Region"
+                name="regionFilter"
                 renderValue={(selected) => selected === "" ? "All" : selected}             >
                 <MenuItem value="">All</MenuItem>
                 {regionOptions.map((region) => (
@@ -569,6 +606,8 @@ const InquiryGrid = () => {
                 value={customerNameFilter}
                 onChange={customerNameChange}
                 displayEmpty
+                label="Customer Name"
+                name="customerNameFilter"
                 renderValue={(selected) => selected === "" ? "All" : selected}            >
                 <MenuItem value="">All</MenuItem>
                 {customerNameOptions.map((customerName) => (
@@ -578,13 +617,14 @@ const InquiryGrid = () => {
                 ))}
               </Select>
             </FormControl>
-
             <FormControl size="small" sx={{ minWidth: 150 }}>
               <InputLabel shrink>Status</InputLabel>
               <Select
                 value={statusFilter}
                 onChange={handleStatusChange}
                 displayEmpty
+                label="Status"
+                name="statusFilter"
                 renderValue={(selected) => selected === "" ? "All" : selected}             >
                 <MenuItem value="">All</MenuItem>
                 {statusOptions.map((status) => (
@@ -639,12 +679,29 @@ const InquiryGrid = () => {
               borderRadius: 2,
             }}
           >
-            <Typography id="technical-details-title" variant="h6" gutterBottom>
-              Offer Details
-            </Typography>
+            <SectionHeader title="Offer Details" />
+            {/* Close Button in Top-Right */}
+            <IconButton
+              onClick={handleCloseModal}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                color: 'grey.700',
+              }}
+            >
+              <GridCloseIcon /> {/* You can replace this with any icon, like ArrowDropUp or custom triangle */}
+            </IconButton>
 
-            {/* Download Button */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+
+            {/* Image and Download Button in one line */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', my: 2 }}>
+              <img
+                src="src/assets/offerImage.jpg" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+                style={{ maxHeight: '100%', borderRadius: 4 }}
+              />
+
               <Button
                 variant="contained"
                 color="secondary"
@@ -680,10 +737,11 @@ const InquiryGrid = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr>
-                    <td style={{ ...cellStyleHeader, width: '50%' }}>SHIP TO: {formData.custAddress}</td>
+
                     <td style={{ ...cellStyleHeader, width: '50%' }}>
-                      SOLD TO: {formData.customerName}
+                      CUSTOMER NAME : {formData.customerName}
                     </td>
+                    <td style={{ ...cellStyleHeader, width: '50%' }}>SHIPPED TO TO: {formData.custAddress}</td>
                   </tr>
                   <tr>
                     <td style={cellStyleValue}>ATTENTION: {formData.salutation + formData.cpfirstName + formData.cplastName}</td>
@@ -694,39 +752,44 @@ const InquiryGrid = () => {
             </Box>
 
             {/* Scrollable Technical Data Table */}
-            <Box sx={{ overflowX: 'auto' }}>
-              <Box
-                sx={{
-                  minWidth: 1000,
-                  '& .MuiDataGrid-root': {
-                    border: '2px solid black', // Outer border
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f5f5f5',
-                    borderBottom: '2px solid black',
-                  },
-                  '& .MuiDataGrid-columnHeader': {
-                    border: '1px solid black',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                  },
-                  '& .MuiDataGrid-cell': {
-                    border: '1px solid black',
-                    fontSize: '14px',
-                    padding: '8px',
-                  },
-                  '& .MuiDataGrid-row': {
-                    borderBottom: '1px solid black',
-                  },
-                }}
-              >              <DataGrid
-                  rows={selectedTechnicalDetails}
-                  columns={technicalDetailsColumns}
-                  getRowId={(row) => row.id || row.rowIndex} // fallback if 'id' is missing
-                  autoHeight
-                  hideFooter
-                />
+            <Box>
+
+              {/* Technical Data Table without horizontal scroll */}
+              <Box sx={{ width: '100%', overflow: 'auto' }}>
+                <Box
+                  sx={{
+                    '& .MuiDataGrid-root': {
+                      border: '2px solid black',
+                    },
+                    '& .MuiDataGrid-columnHeaders': {
+                      backgroundColor: '#f5f5f5',
+                      borderBottom: '2px solid black',
+                    },
+                    '& .MuiDataGrid-columnHeader': {
+                      border: '1px solid black',
+                      fontWeight: 'bold',
+                      fontSize: '14px',
+                    },
+                    '& .MuiDataGrid-cell': {
+                      border: '1px solid black',
+                      fontSize: '14px',
+                      padding: '8px',
+                    },
+                    '& .MuiDataGrid-row': {
+                      borderBottom: '1px solid black',
+                    },
+                  }}
+                >
+                  <DataGrid
+                    rows={selectedTechnicalDetails}
+                    columns={technicalDetailsColumns}
+                    getRowId={(row) => row.id || row.rowIndex}
+                    autoHeight
+                    hideFooter
+                  />
+                </Box>
               </Box>
+
             </Box>
             {/* Additional Notes Section */}
             <Box mt={4}>
@@ -758,6 +821,137 @@ const InquiryGrid = () => {
                 <p><strong>VALIDITY OF OFFER:</strong> 15 Days</p>
               </Box>
             </Box>
+            {/* Technical Data Table without horizontal scroll */}
+            <Box sx={{ width: '100%', overflow: 'hidden', marginTop: 5 }}>
+              <Box
+                sx={{
+                  '& .MuiDataGrid-root': {
+                    border: '2px solid black',
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: '#f5f5f5',
+                    borderBottom: '2px solid black',
+                  },
+                  '& .MuiDataGrid-columnHeader': {
+                    border: '1px solid black',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                  },
+                  '& .MuiDataGrid-cell': {
+                    border: '1px solid black',
+                    fontSize: '14px',
+                    padding: '8px',
+                  },
+                  '& .MuiDataGrid-row': {
+                    borderBottom: '1px solid black',
+                  },
+                }}
+              >
+                <DataGrid
+                  rows={selectedTechnicalDetails}
+                  columns={technicalDetailsColumnsAll}
+                  getRowId={(row) => row.id || row.rowIndex}
+                  autoHeight
+                  hideFooter
+                />
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap', // or remove if you strictly want one line with overflow
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                overflowX: 'auto', // optional: for scroll if logos overflow
+                padding: 2,
+              }}
+            >
+              {imageList.map((file, index) => (
+                <img
+                  key={index}
+                  src={`src/assets/${file}`}
+                  alt={file.replace(/\..+$/, '')}
+                  style={{
+                    height: 60,
+                    objectFit: 'contain',
+                    borderRadius: 4,
+                    padding: 4,
+                  }}
+                />
+              ))}
+            </Box>
+
+            {/* <Box sx={{ display: 'flex' }}>
+              <img
+                src="src/assets/marathon.png" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/weg.png" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/cemp.png" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/bharatbijlee.jpg" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/wolong.png" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+
+            </Box>
+            <Box sx={{ display: 'flex' }}>
+              <img
+                src="src/assets/offerImage.jpg" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/wolongatb.png" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/brookcromton.png" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/General_Electric_logo.svg.jpeg" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/kirloskar.jpg" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+            </Box>
+            <Box sx={{ display: 'flex' }}>
+              <img
+                src="src/assets/hindustanelectric.jpeg" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+              <img
+                src="src/assets/schorch.jpeg" // ✅ Corrected path for public folder
+                alt="Offer Preview"
+              // style={{ borderRadius: 4 }}
+              />
+            </Box> */}
+
+
             {/* Close Button */}
             <Box mt={2} textAlign="right">
               <Button variant="contained" onClick={handleCloseModal}>
