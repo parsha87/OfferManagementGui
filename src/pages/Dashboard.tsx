@@ -17,6 +17,8 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
+import { TooltipProps } from 'recharts';
+
 
 const Dashboard = () => {
   const [statusData, setStatusData] = useState<{ name: string; value: number }[]>([]);
@@ -252,29 +254,38 @@ const Dashboard = () => {
         }
         const status = inquiry.status || 'Unknown';
         monthlyMap[monthYear][status] = (monthlyMap[monthYear][status] || 0) + 1;
+
+        const packageAmount = parseFloat(inquiry.totalPackage) || 0;
+        // 💰 Sum `totalPackage` grouped by offerStatus
+        monthlyMap[monthYear][status] = (monthlyMap[monthYear][status] || 0) + packageAmount;
       }
     });
 
     // Convert monthlyMap to array format
-    const result = Object.entries(monthlyMap).map(([monthYear, statusCounts]) => {
+    // const result = Object.entries(monthlyMap).map(([monthYear, statusCounts]) => {
+    //   return {
+    //     name: monthYear,
+    //     ...statusCounts,
+    //   };
+    // });
+    // Convert map to chart-friendly array, and add total sum of all statuses
+    const result = Object.entries(monthlyMap).map(([monthYear, statusSums]) => {
+      const total = Object.values(statusSums).reduce((sum, val) => sum + val, 0);
       return {
         name: monthYear,
-        ...statusCounts,
+        ...statusSums,
+        total,  // Add total package sum here
       };
     });
 
     // Sort by date ascending
-    result.sort((a, b) => {
-      const dateA = new Date(a.name);
-      const dateB = new Date(b.name);
-      return dateA.getTime() - dateB.getTime();
-    });
+    result.sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime());
+
 
     setMonthlyStatusData(result);
   };
 
   const updateMonthlyOfferStatusData = (data: any[]) => {
-    // Create a map from month-year to status counts
     const monthlyMap: Record<string, Record<string, number>> = {};
 
     data.forEach(inquiry => {
@@ -284,28 +295,51 @@ const Dashboard = () => {
         if (!monthlyMap[monthYear]) {
           monthlyMap[monthYear] = {};
         }
+
         const status = inquiry.offerStatus || 'Unknown';
-        monthlyMap[monthYear][status] = (monthlyMap[monthYear][status] || 0) + 1;
+        const packageAmount = parseFloat(inquiry.totalPackage) || 0;
+
+        // 💰 Sum `totalPackage` grouped by offerStatus
+        monthlyMap[monthYear][status] = (monthlyMap[monthYear][status] || 0) + packageAmount;
       }
     });
 
-    // Convert monthlyMap to array format
-    const result = Object.entries(monthlyMap).map(([monthYear, statusCounts]) => {
+    // Convert map to chart-friendly array, and add total sum of all statuses
+    const result = Object.entries(monthlyMap).map(([monthYear, statusSums]) => {
+      const total = Object.values(statusSums).reduce((sum, val) => sum + val, 0);
       return {
         name: monthYear,
-        ...statusCounts,
+        ...statusSums,
+        total,  // Add total package sum here
       };
     });
 
-    // Sort by date ascending
-    result.sort((a, b) => {
-      const dateA = new Date(a.name);
-      const dateB = new Date(b.name);
-      return dateA.getTime() - dateB.getTime();
-    });
+    // Sort by month
+    result.sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime());
 
-    setMonthlyStatusData(result);
-    setMonthlyOfferStatusData(result)
+    setMonthlyOfferStatusData(result);
+  };
+
+  // Define the type for your tooltip component props:
+  const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+      const total = payload.reduce((sum, entry) => sum + (entry.value || 0), 0);
+
+      return (
+        <div style={{ backgroundColor: 'white', border: '1px solid #ccc', padding: 10 }}>
+          <p><strong>{label}</strong></p>
+          {payload.map((entry) => (
+            <p key={entry.dataKey} style={{ color: entry.color, margin: 0 }}>
+              {entry.dataKey}: ₹{entry.value?.toLocaleString()}
+            </p>
+          ))}
+          <hr />
+          <p><strong>Total: ₹{total.toLocaleString()}</strong></p>
+        </div>
+      );
+    }
+
+    return null;
   };
 
 
@@ -467,11 +501,16 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={monthlyStatusData} >
                     <XAxis dataKey="name" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip />
+                    <YAxis tickFormatter={(value) => `₹${value.toLocaleString()}`} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     {statusOptions.map((status, idx) => (
-                      <Bar key={status} dataKey={status} stackId="a" fill={COLORS[idx % COLORS.length]} />
+                      <Bar
+                        key={status}
+                        dataKey={status}
+                        stackId="a" // ✅ stacked to show totalPackage with color-wise status
+                        fill={COLORS[idx % COLORS.length]}
+                      />
                     ))}
                   </BarChart>
                 </ResponsiveContainer>
@@ -486,17 +525,23 @@ const Dashboard = () => {
           <Card sx={{ mt: '6px' }}>
             <CardContent>
               <div className="shadow-lg p-1 rounded-xl bg-white flex-1">
-                <h2 className="text-xl font-bold mb-4">Offer Status</h2>
+                <h2 className="text-xl font-bold mb-4">Monthly Offer Status</h2>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyOfferStatusData} >
+                  <BarChart data={monthlyOfferStatusData}>
                     <XAxis dataKey="name" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip />
+                    <YAxis tickFormatter={(value) => `₹${value.toLocaleString()}`} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     {offerStatusOptions.map((status, idx) => (
-                      <Bar key={status} dataKey={status} stackId="a" fill={COLORS[idx % COLORS.length]} />
+                      <Bar
+                        key={status}
+                        dataKey={status}
+                        stackId="a" // ✅ stacked to show totalPackage with color-wise status
+                        fill={COLORS[idx % COLORS.length]}
+                      />
                     ))}
                   </BarChart>
+
                 </ResponsiveContainer>
               </div>
             </CardContent></Card>
