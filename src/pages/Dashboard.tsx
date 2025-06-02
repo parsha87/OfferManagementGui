@@ -58,7 +58,7 @@ const Dashboard = () => {
   // const [fromDateFilter, setFromDateFilter] = useState('');
   // const [toDateFilter, setToDateFilter] = useState('');
 
-  const statusOptions = ['Draft', 'Offer Sent', 'Approved', 'Closed'];
+  const statusOptions = ['Draft', 'Offer Sent'];
   const regionOptions = ['North', 'South', 'East', 'West'];
   const offerStatusOptions = ['Budgetary', "Live", 'Won', 'Lost', 'Hold'];
   const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]);

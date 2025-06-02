@@ -54,17 +54,18 @@ const Login = () => {
         email: username,
         password,
       });
-      const { token, name } = response.data;
+      const { token, name, role } = response.data;
 
       // Save token to sessionStorage
       sessionStorage.setItem('token', token);
+      sessionStorage.setItem('role', role);
 
       // Set user in context
       login(name); // or username, based on your API response
 
       // Navigate to dashboard
       navigate('/dashboard');
-    } catch (err : any) {
+    } catch (err: any) {
       if (err.response?.status === 401) {
         setError(err.response.data.message || "Invalid credentials. Please try again.");
       }

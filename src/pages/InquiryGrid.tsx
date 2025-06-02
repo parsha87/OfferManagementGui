@@ -106,7 +106,7 @@ const InquiryGrid = () => {
   const [regionFilter, setRegionFilter] = useState('');
   const [customerNameFilter, setCustomerNameFilter] = useState('');
   const [customerTypeFilter, setCustomerTypeFilter] = useState('');
-  const statusOptions = ['Draft', 'Offer Sent', 'Approved', 'Closed'];
+  const statusOptions = ['Draft', 'Offer Sent'];
   const regionOptions = ['North', 'South', 'East', 'West'];
   const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]); // Use useState to store the options
   const [customerTypeOptions, setCustomerTypeOptions] = useState<string[]>([]); // Use useState to store the options
@@ -365,7 +365,7 @@ const InquiryGrid = () => {
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'report.pdf';
+      link.download = formData.enquiryNo +'.pdf';
       document.body.appendChild(link); // Append to body to ensure it works in all browsers
       link.click();
       link.remove();
@@ -874,83 +874,17 @@ const InquiryGrid = () => {
                   src={`src/assets/${file}`}
                   alt={file.replace(/\..+$/, '')}
                   style={{
-                    height: 60,
-                    objectFit: 'contain',
+                    width: 50,           // fixed width
+                    height: 50,          // fixed height
+                    objectFit: 'contain', // maintain aspect ratio
                     borderRadius: 4,
                     padding: 4,
+                    backgroundColor: '#f5f5f5', // optional: helps visualize the bounding box
                   }}
                 />
               ))}
-            </Box>
-
-            {/* <Box sx={{ display: 'flex' }}>
-              <img
-                src="src/assets/marathon.png" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/weg.png" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/cemp.png" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/bharatbijlee.jpg" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/wolong.png" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
 
             </Box>
-            <Box sx={{ display: 'flex' }}>
-              <img
-                src="src/assets/offerImage.jpg" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/wolongatb.png" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/brookcromton.png" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/General_Electric_logo.svg.jpeg" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/kirloskar.jpg" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex' }}>
-              <img
-                src="src/assets/hindustanelectric.jpeg" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-              <img
-                src="src/assets/schorch.jpeg" // ✅ Corrected path for public folder
-                alt="Offer Preview"
-              // style={{ borderRadius: 4 }}
-              />
-            </Box> */}
-
 
             {/* Close Button */}
             <Box mt={2} textAlign="right">

@@ -4,9 +4,16 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ListIcon from '@mui/icons-material/List';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 const Sidebar = ({ open, setOpen }: { open: boolean, setOpen: (val: boolean) => void }) => {
   const navigate = useNavigate();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedRole = sessionStorage.getItem('role');
+    setRole(storedRole);
+  }, []);
 
   return (
     <Drawer
@@ -14,12 +21,12 @@ const Sidebar = ({ open, setOpen }: { open: boolean, setOpen: (val: boolean) => 
       anchor="left"
       open={open}
       sx={{
-        width: open ? 240 : 60, // Adjust width based on collapse state
+        width: open ? 240 : 60,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: open ? 240 : 60,
           boxSizing: 'border-box',
-          transition: 'width 0.3s', // Smooth transition when collapsing
+          transition: 'width 0.3s',
         }
       }}
     >
@@ -27,16 +34,21 @@ const Sidebar = ({ open, setOpen }: { open: boolean, setOpen: (val: boolean) => 
       <List>
         <ListItemButton onClick={() => navigate('/dashboard')}>
           <ListItemIcon><DashboardIcon /></ListItemIcon>
-          {open && <ListItemText primary="Dashboard" />} {/* Only show text when open */}
+          {open && <ListItemText primary="Dashboard" />}
         </ListItemButton>
+
         <ListItemButton onClick={() => navigate('/inquiries')}>
           <ListItemIcon><ListIcon /></ListItemIcon>
-          {open && <ListItemText primary="Inquiries" />} {/* Only show text when open */}
+          {open && <ListItemText primary="Inquiries" />}
         </ListItemButton>
-        <ListItemButton onClick={() => navigate('/users')}>
-          <ListItemIcon><ListIcon /></ListItemIcon>
-          {open && <ListItemText primary="users" />} {/* Only show text when open */}
-        </ListItemButton>
+
+        {/* Conditionally render Users menu if role is not "user" */}
+        {role !== 'User' && (
+          <ListItemButton onClick={() => navigate('/users')}>
+            <ListItemIcon><ListIcon /></ListItemIcon>
+            {open && <ListItemText primary="Users" />}
+          </ListItemButton>
+        )}
       </List>
     </Drawer>
   );

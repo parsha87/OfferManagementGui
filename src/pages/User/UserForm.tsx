@@ -20,6 +20,24 @@ const UserForm = () => {
 
     const [errors, setErrors] = useState<any>({});
 
+    const [roles, setRoles] = useState<string[]>([]);
+
+    useEffect(() => {
+        // Fetch roles on component mount
+        const fetchRoles = async () => {
+            try {
+                const res = await api.get('User/get-roles');
+                const roleNames = res.data.map((role: any) => role.name); // Adjust if your API returns differently
+                setRoles(roleNames);
+            } catch (err) {
+                console.error('Failed to fetch roles', err);
+            }
+        };
+
+        fetchRoles();
+    }, []);
+
+
     // Fetch user data if updating
     useEffect(() => {
         if (id) {
@@ -174,16 +192,21 @@ const UserForm = () => {
                                 <InputLabel>Role</InputLabel>
                                 <Select
                                     name="role"
+                                    label="role"
+                                    type="role"
                                     value={user.role}
                                     onChange={handleRoleChange}
                                     fullWidth
                                 >
-                                    <MenuItem value="Admin">Admin</MenuItem>
-                                    <MenuItem value="User">User</MenuItem>
-                                    {/* <MenuItem value="SuperAdmin">SuperAdmin</MenuItem> */}
+                                    {roles.map((role) => (
+                                        <MenuItem key={role} value={role}>
+                                            {role}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                                 {errors.role && <FormHelperText>{errors.role}</FormHelperText>}
                             </FormControl>
+
                         </Grid>
                         <Grid size={{ xs: 6, md: 6 }} >
                             <FormControlLabel
