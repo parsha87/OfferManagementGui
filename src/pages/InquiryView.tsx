@@ -24,7 +24,7 @@ interface InquiryDetailViewProps {
     totalPackage: number;
     rfqNo: string;
     rfqDate: string;
-    techicalDetailsMapping: Array<{
+    technicaldetailsmappings: Array<{
       motorType: string;
       kw: string;
       hp: string;
@@ -80,13 +80,13 @@ const InquiryDetailView: React.FC<InquiryDetailViewProps> = ({ inquiryData }) =>
     y += 20;
     
     // Technical details table if exists
-    if (inquiryData.techicalDetailsMapping?.length > 0) {
+    if (inquiryData.technicaldetailsmappings?.length > 0) {
       doc.setFontSize(14);
       doc.text('Technical Details', 20, y);
       y += 10;
       
       const columns = ['Motor Type', 'KW', 'HP', 'Phase', 'Pole', 'Qty', 'Amount'];
-      const data = inquiryData.techicalDetailsMapping.map(detail => [
+      const data = inquiryData.technicaldetailsmappings.map(detail => [
         detail.motorType,
         detail.kw,
         detail.hp,
@@ -181,7 +181,7 @@ const InquiryDetailView: React.FC<InquiryDetailViewProps> = ({ inquiryData }) =>
         </CardContent>
       </Card>
 
-      {inquiryData.techicalDetailsMapping?.length > 0 && (
+      {inquiryData.technicaldetailsmappings?.length > 0 && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>Technical Details</Typography>
@@ -202,7 +202,7 @@ const InquiryDetailView: React.FC<InquiryDetailViewProps> = ({ inquiryData }) =>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {inquiryData.techicalDetailsMapping.map((detail, index) => (
+                  {inquiryData.technicaldetailsmappings.map((detail, index) => (
                     <TableRow key={index}>
                       <TableCell>{detail.motorType}</TableCell>
                       <TableCell>{detail.kw}</TableCell>

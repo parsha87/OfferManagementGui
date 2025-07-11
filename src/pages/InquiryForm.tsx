@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, TableContainer, InputAdornment, CardActions, Paper, SelectChangeEvent, } from '@mui/material';
+import { Grid, TextField, Button, Typography, Box, MenuItem, TableCell, TableBody, TableRow, TableHead, Table, DialogActions, DialogContent, DialogTitle, Dialog, Card, CardContent, Autocomplete, FormControl, InputLabel, Select, Checkbox, ListItemText, createFilterOptions, TableContainer, InputAdornment, CardActions, Paper, SelectChangeEvent, FormControlLabel, Switch, } from '@mui/material';
 import { Edit, Delete, NewLabel } from '@mui/icons-material';
 import api from '../context/AxiosContext';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,7 +12,9 @@ export interface MotorMapping {
     inquiryId: number
     motorType: string;
     kw: string;
+    kw2: string;
     hp: string;
+    hp2: string;
     phase: string;
     pole: string;
     frameSize: string;
@@ -35,7 +37,8 @@ export interface MotorMapping {
     cdf: string
     ambientTemp: string
     tempRise: string
-    accessories: string[]
+    accessories: any
+    nonStandardFeatures: any
     brake: string
     encoderMounting: string
     encoderMountingIfYes: string
@@ -45,12 +48,18 @@ export interface MotorMapping {
     amount: string;
     deliveryTime: string;
     startType: string;
+    techDetailsListPrice: string;
+    techDetailsDiscount: string;
+    isAmountManuallyEdited: boolean;
+
 }
 
 interface InquiryFormData {
     inquiryId: number;
     customerType: string;
     customerName: string;
+    firstname: string;
+    lastname: string;
     customerId: number;
     region: string;
     city: string;
@@ -78,9 +87,16 @@ interface InquiryFormData {
     custPhoneNo: string;
     custAddress: string;
     custEmail: string;
-    techicalDetailsMapping: MotorMapping[];
+    customerRfqno: string;
+    lostReason: string;
+    customerRfqdate: Date;
+    offerDueDate: Date;
+    technicaldetailsmappings: MotorMapping[];
     uploadedFiles: uploadedFiles[];
-    visitSection: VisitSectionForm[];
+    visitsections: visitsectionsForm[];
+    allocatedto: string;
+    selectedCurrency: string;
+    isListPrice: boolean;
 }
 
 enum ListOfValueType {
@@ -90,10 +106,13 @@ enum ListOfValueType {
     StartsPerHour = 'startsPerHour',
     AmbientTemp = 'ambientTemp',
     Accessories = 'accessories',
+    NonStandardFeatures = 'nonStandardFeatures',
     Application = 'application',
     Segment = 'segment',
     StdPaymentTerms = 'stdPaymentTerms',
-    City = 'city'
+    City = 'city',
+    Region = 'region',
+    Country = 'country',
 }
 
 type uploadedFiles = {
@@ -102,13 +121,21 @@ type uploadedFiles = {
     originalFileName: string;
 };
 
-interface VisitSectionForm {
-    visitSectionId: number;
+interface visitsectionsForm {
+    visitsectionsId: number;
     inquiryId: number;
     visitDate: string;
     visitReason: string;
     visitKeyPoints: string;
 }
+type CustomerOption = {
+    label: string;
+    value: number;
+    email: string;
+    phoneNo: string;
+    address: string;
+};
+
 
 const InquiryForm = () => {
     const { id } = useParams();
@@ -127,15 +154,23 @@ const InquiryForm = () => {
     const [brands, setBrands] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
     const [ambientTemps, setAmbientTemps] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
     const [accessories, setAccessories] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
+    const [nonStandardFeatures, setNonStandardFeatures] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
+
     const [applications, setApplications] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
     const [segments, setSegments] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
     const [stdPaymentTerms, setStdPaymentTerms] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
     const [citys, setcitys] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
+
+    const [regions, setRegions] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
+    const [country, setCountry] = useState<{ label: string; value: number, inputValue?: string }[]>([]);
+
     const filter = createFilterOptions();
 
     const [open, setOpen] = useState(false);
     const [dialogValue, setDialogValue] = useState({
         customerName: '',
+        firstname: '',
+        lastname: '',
         email: '',
         address: '',
         phoneNo: '',
@@ -145,7 +180,9 @@ const InquiryForm = () => {
         inquiryId: 0,
         motorType: "LT",
         kw: "",
+        kw2: "",
         hp: "",
+        hp2: "",
         phase: "Three",
         pole: "4",
         frameSize: "",
@@ -169,8 +206,9 @@ const InquiryForm = () => {
         ambientTemp: "50",
         tempRise: "Limited to Class F",
         accessories: [],
-        brake: "",
-        encoderMounting: "",
+        nonStandardFeatures: "",
+        brake: "No",
+        encoderMounting: "No",
         encoderMountingIfYes: "",
         application: "",
         segment: "",
@@ -178,17 +216,23 @@ const InquiryForm = () => {
         amount: "",
         deliveryTime: '',
         startType: "DOL",
+        techDetailsDiscount: '',
+        techDetailsListPrice: '',
+        isAmountManuallyEdited: false,
+
     });
 
     const [formData, setFormData] = useState<InquiryFormData>({
         inquiryId: 0,
         customerType: '',
         customerName: '',
+        firstname: '',
+        lastname: '',
         customerId: 0,
         region: '',
         city: '',
         state: '',
-        country: '',
+        country: 'India',
         salutation: '',
         cpfirstName: '',
         cplastName: '',
@@ -211,20 +255,29 @@ const InquiryForm = () => {
         custPhoneNo: '',
         custAddress: '',
         custEmail: '',
-        techicalDetailsMapping: [],
+        customerRfqno: '',
+        customerRfqdate: new Date(),
+        offerDueDate: new Date(),
+        lostReason: '',
+        technicaldetailsmappings: [],
         uploadedFiles: [], // ✅ no error now
-        visitSection: []
+        visitsections: [],
+        allocatedto: '',
+        selectedCurrency: '',
+        isListPrice: false,
     });
 
     const [formDataAll, setFormDataAll] = useState<InquiryFormData>({
         inquiryId: 0,
         customerType: '',
         customerName: '',
+        firstname: '',
+        lastname: '',
         customerId: 0,
         region: '',
         city: '',
         state: '',
-        country: '',
+        country: 'India',
         salutation: '',
         cpfirstName: '',
         cplastName: '',
@@ -247,16 +300,26 @@ const InquiryForm = () => {
         custPhoneNo: '',
         custAddress: '',
         custEmail: '',
-        techicalDetailsMapping: [],
+        customerRfqno: '',
+        customerRfqdate: new Date(),
+        offerDueDate: new Date(),
+        lostReason: '',
+        technicaldetailsmappings: [],
         uploadedFiles: [], // ✅ no error now
-        visitSection: [],
+        visitsections: [],
+        allocatedto: '',
+        selectedCurrency: '',
+        isListPrice: false,
     });
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
 
     const customerTypeOptions = ['Domestic', 'Export'];
+    const currncyOptions = ['INR', 'USD'];
+    const [isListPrice, setIsListPrice] = useState(true);
+
     // Define the motor type options
-    const motorTypeOptions = ['LT', 'HT'];
+    const motorTypeOptions = ['LT', 'HT', 'Drives', 'Fan', 'DC Motor', 'Spares', '1F', 'Gear box'];
     const startTypeOptions = ['DOL', 'Star-Delta', 'Soft Start', 'VFD', 'LRS'];
     const regionOptions = ['North', 'South', 'East', 'West'];
     const stateOptions = [
@@ -295,7 +358,8 @@ const InquiryForm = () => {
         'Jammu and Kashmir',
         'Ladakh',
         'Lakshadweep',
-        'Puducherry'
+        'Puducherry',
+        'NA'
     ];
     const countryOptions = ['India'];
     const salutationOptions = [
@@ -325,7 +389,7 @@ const InquiryForm = () => {
     ];
     const dopOptions = ['IP23', 'IP55', 'IP56', 'IP65', 'IP66', 'IP67'];
     const insulationClassOptions = ['F', 'H'];
-    const efficiencyOptions = ['IE1', 'IE2', 'IE3', 'IE4', 'IE5'];
+    const efficiencyOptions = ['IE1', 'IE2', 'IE3', 'IE4', 'IE5', 'NA'];
     const mountingOptions = ['B3', 'B5', 'B35', 'V1', 'B34', 'B14', 'V18', 'B6', 'V6'];
     const safeAreaOptions = ['Safe Area', 'Hazardous Area'];
     const zoneOptions = ['I', 'II', '22', '21'];
@@ -340,13 +404,13 @@ const InquiryForm = () => {
 
     const [openProductDes, setOpenProductDes] = useState(false);
     const [formDataProductDes, setFormDataProductDes] = useState({
-        visitSectionId: 0,
+        visitsectionsId: 0,
         inquiryId: 0,
         visitDate: '',
         visitReason: '',
         visitKeyPoints: '',
     });
-    const [productDesList, setProductDesList] = useState<VisitSectionForm[]>([]);
+    const [productDesList, setProductDesList] = useState<visitsectionsForm[]>([]);
 
     const [editIndexVisit, setEditIndexVisit] = useState(null);
 
@@ -365,6 +429,8 @@ const InquiryForm = () => {
         }
     }, [id]);
 
+
+
     // useEffect(() => {
     //     fetchCustomers();
     //     fetchListOfValues();
@@ -382,21 +448,20 @@ const InquiryForm = () => {
     // }, [id]);
 
 
-    const fetchCustomers = async () => {
-        try {
-            const response = await api.get('Customer'); // Replace with your API URL
-            const customerOptions = response.data.map((cust: any) => ({
-                label: cust.customerName,   // adjust fields based on API response
-                value: +cust.id,
-                email: cust.email,
-                phoneNo: cust.phoneNo,
-                address: cust.address
-            }));
-            setCustomers(customerOptions);
-        } catch (error) {
-            console.error('Error fetching customers:', error);
-        }
+    const fetchCustomers = async (): Promise<CustomerOption[]> => {
+        const res = await api.get('Customer');
+        const list = res.data.map((cust: any) => ({
+            label: cust.customerName,
+            value: cust.id,
+            email: cust.email,
+            phoneNo: cust.phoneNo,
+            address: cust.address
+        }));
+        setCustomers(list); // update UI
+        return list;        // allow logic after fetch
     };
+
+
 
     // Fetch data function for all types
     const fetchListOfValues = async () => {
@@ -405,6 +470,27 @@ const InquiryForm = () => {
             //Set all list
             setListOfValues(response.data);
             // Mapping for each type
+
+
+
+
+            const regionOptions = response.data
+                .filter((x: any) => x.type === ListOfValueType.Region)
+                .map((freq: any) => ({
+                    label: freq.value, // Adjust the field name accordingly
+                    value: freq.id,
+                }));
+            setRegions(regionOptions);
+
+            const countryOptions = response.data
+                .filter((x: any) => x.type === ListOfValueType.Country)
+                .map((freq: any) => ({
+                    label: freq.value, // Adjust the field name accordingly
+                    value: freq.id,
+                }));
+            setCountry(countryOptions);
+
+
 
             const brandOptions = response.data
                 .filter((x: any) => x.type === ListOfValueType.Brand)
@@ -500,12 +586,40 @@ const InquiryForm = () => {
         }));
     };
 
+
+    function formatNumberWithCommas(value: any) {
+        const parts = value.toString().split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+    }
+
     const handleBrandChange = (e: any) => {
         const { name, value } = e.target;
         // Ensure the value only has up to two decimal places
 
 
+        const updated = {
+            ...brandInput,
+            [name]: value,
+        };
+        // Check for manual amount override
+        if (name === 'amount') {
+            updated.isAmountManuallyEdited = true;
+        }
+        // If price or quantity changed and user has not manually edited amount
+        if (
+            (name === 'techDetailsListPrice' || name === 'quantity') &&
+            !brandInput.isAmountManuallyEdited
+        ) {
+            const price = parseFloat(name === 'techDetailsListPrice' ? value : updated.techDetailsListPrice);
+            const quantity = parseFloat(name === 'quantity' ? value : updated.quantity);
 
+            if (!isNaN(price) && !isNaN(quantity)) {
+                updated.amount = (price * quantity).toFixed(2);
+            }
+        }
+
+        setBrandInput(updated);
 
         if (name === 'kw') {
             const formattedValue = value
@@ -524,6 +638,11 @@ const InquiryForm = () => {
                 ...brandInput,
                 [name]: formattedValue,
             });
+        }
+        if (isListPrice && (name === 'techDetailsListPrice' || name === 'techDetailsDiscount')) {
+            const price = parseFloat(updated.techDetailsListPrice) || 0;
+            const discount = parseFloat(updated.techDetailsDiscount) || 0;
+            updated.amount = (price - discount).toFixed(2);
         }
         else {
             setBrandInput((prev) => {
@@ -549,20 +668,28 @@ const InquiryForm = () => {
             toast.error('Enter Brand Name.');
             return; // Don't add if brand is empty
         }
+        if (!brandInput.quantity) {
+            toast.error('Enter Quantity.');
+            return; // Don't add if brand is empty
+        }
+        if (!brandInput.techDetailsListPrice) {
+            toast.error('Enter List Price.');
+            return; // Don't add if brand is empty
+        }
 
         if (editIndex !== null) {
 
             // If editIndex is not null, update the existing row
             setFormData((prevData: any) => {
-                const updatedBrandMapping = [...prevData.techicalDetailsMapping];
+                const updatedBrandMapping = [...prevData.technicaldetailsmappings];
                 updatedBrandMapping[editIndex] = { ...brandInput }; // Update the specific row
                 const totalPackages = updatedBrandMapping.reduce(
-                    (sum, item) => sum + (Number(item.quantity) * Number(item.ammount || item.amount || 0)),
+                    (sum, item) => sum + (Number(item.amount)),
                     0
                 );
                 return {
                     ...prevData,
-                    techicalDetailsMapping: updatedBrandMapping,
+                    technicaldetailsmappings: updatedBrandMapping,
                     totalPackage: totalPackages
                 };
             });
@@ -570,16 +697,16 @@ const InquiryForm = () => {
         } else {
             // If editIndex is null, add a new row
             setFormData((prevData: any) => {
-                const updatedBrandMapping = [...prevData.techicalDetailsMapping, { ...brandInput }];
+                const updatedBrandMapping = [...prevData.technicaldetailsmappings || [], { ...brandInput }];
 
                 const totalPackages = updatedBrandMapping.reduce(
-                    (sum, item) => sum + (Number(item.quantity) * Number(item.ammount || item.amount || 0)),
+                    (sum, item) => sum + (Number(item.ammount || item.amount || 0)),
                     0
                 );
 
                 return {
                     ...prevData,
-                    techicalDetailsMapping: updatedBrandMapping,
+                    technicaldetailsmappings: updatedBrandMapping,
                     totalPackage: totalPackages
                 };
             });
@@ -591,7 +718,9 @@ const InquiryForm = () => {
             inquiryId: 0,
             motorType: "LT",
             kw: "",
+            kw2: "",
             hp: "",
+            hp2: "",
             phase: "Three",
             pole: "4",
             frameSize: "",
@@ -615,8 +744,9 @@ const InquiryForm = () => {
             ambientTemp: "50",
             tempRise: "Limited to Class F",
             accessories: [],
-            brake: "",
-            encoderMounting: "",
+            nonStandardFeatures: "",
+            brake: "No",
+            encoderMounting: "No",
             encoderMountingIfYes: "",
             application: "",
             segment: "",
@@ -624,6 +754,10 @@ const InquiryForm = () => {
             amount: "",
             deliveryTime: '',
             startType: "DOL",
+            techDetailsDiscount: '',
+            techDetailsListPrice: '',
+            isAmountManuallyEdited: false,
+
 
         });
         setOpenModal(false);
@@ -635,7 +769,9 @@ const InquiryForm = () => {
             inquiryId: 0,
             motorType: "LT",
             kw: "",
+            kw2: "",
             hp: "",
+            hp2: "",
             phase: "Three",
             pole: "4",
             frameSize: "",
@@ -659,8 +795,9 @@ const InquiryForm = () => {
             ambientTemp: "50",
             tempRise: "Limited to Class F",
             accessories: [],
-            brake: "",
-            encoderMounting: "",
+            nonStandardFeatures: "",
+            brake: "No",
+            encoderMounting: "No",
             encoderMountingIfYes: "",
             application: "",
             segment: "",
@@ -668,28 +805,31 @@ const InquiryForm = () => {
             amount: "",
             deliveryTime: "",
             startType: "DOL",
+            techDetailsDiscount: '',
+            techDetailsListPrice: '',
+            isAmountManuallyEdited: false,
 
         });
         setOpenModal(true);
     };
 
     // const handleEditBrand = (index: any) => {
-    //     setBrandInput(formData.techicalDetailsMapping[index]);
+    //     setBrandInput(formData.technicaldetailsmappings[index]);
     //     setEditIndex(index); // Set the index of the row being edited
     // };
 
 
 
     const handleEditBrand = (index: any) => {
-        const selected = formData.techicalDetailsMapping[index];
+        const selected = formData.technicaldetailsmappings[index];
         setBrandInput({ ...selected }); // pre-fill modal form
         setEditIndex(index);            // track edit mode
         setOpenModal(true);
     };
 
 
-    const handleEditVisitSection = (index: any) => {
-        const selected = formData.visitSection[index];
+    const handleEditvisitsections = (index: any) => {
+        const selected = formData.visitsections[index];
         selected.visitDate = selected.visitDate; // Format date to YYYY-MM-DD
         setFormDataProductDes({ ...selected }); // pre-fill modal form
         setEditIndexVisit(index);            // track edit mode
@@ -704,12 +844,89 @@ const InquiryForm = () => {
     const handleDeleteBrand = () => {
         setFormData((prev) => ({
             ...prev,
-            techicalDetailsMapping: prev.techicalDetailsMapping.filter((_, i) => i !== deleteIndex),
+            technicaldetailsmappings: prev.technicaldetailsmappings.filter((_, i) => i !== deleteIndex),
         }));
         setOpenDeleteDialog(false);
     };
+    const validateFormData = (): boolean => {
+        // Basic Required Fields
+        if (!formData.customerType) return toastError('Customer Type is required');
+        if (!formData.customerName) return toastError('Customer Name is required');
+        if (!formData.cpfirstName) return toastError('First Name is required');
+        if (!formData.cplastName) return toastError('Last Name is required');
+        if (!formData.region) return toastError('Region is required');
+        if (!formData.city) return toastError('City is required');
+        if (!formData.state) return toastError('State is required');
+        if (!formData.country) return toastError('Country is required');
+        if (!formData.salutation) return toastError('Salutation is required');
+
+        // Contact Info
+        if (!formData.custPhoneNo) return toastError('Customer Phone No is required');
+        if (!/^\+?\d{7,15}$/.test(formData.custPhoneNo)) {
+            return toastError('Enter a valid phone number (7 to 15 digits, optionally starting with +)');
+        }
+        if (!formData.custEmail) return toastError('Customer Email is required');
+        if (!/\S+@\S+\.\S+/.test(formData.custEmail)) return toastError('Email is invalid');
+
+        // Address
+        if (!formData.custAddress) return toastError('Customer Address is required');
+
+        // Enquiry & RFQ
+        // if (!formData.enquiryNo) return toastError('Enquiry No is required');
+        if (!formData.enquiryDate) return toastError('Enquiry Date is required');
+        // if (!formData.rfqNo) return toastError('RFQ No is required');
+        // if (!formData.rfqDate) return toastError('RFQ Date is required');
+        if (!formData.customerRfqno) return toastError('Customer RFQ No is required');
+        if (!formData.customerRfqdate) return toastError('Customer RFQ Date is required');
+        if (!formData.offerDueDate) return toastError('Offer Due Date is required');
+
+        // Commercials
+        // if (formData.listPrice < 0) return toastError('List Price cannot be negative');
+        // if (formData.discount < 0) return toastError('Discount cannot be negative');
+        // if (formData.netPriceWithoutGST < 0) return toastError('Net Price without GST cannot be negative');
+        if (formData.totalPackage < 0) return toastError('Total Package cannot be negative');
+
+        // Status
+        if (!formData.status) return toastError('Status is required');
+
+        // Dates
+        // if (!formData.createdOn) return toastError('Created On date is required');
+        // if (!formData.updatedOn) return toastError('Updated On date is required');
+
+        // User Info
+        // if (!formData.createdBy) return toastError('Created By is required');
+        // if (!formData.updatedBy) return toastError('Updated By is required');
+
+        // Technical Details
+        // if (!formData.technicaldetailsmappings || formData.technicaldetailsmappings.length === 0) {
+        //     return toastError('At least one technical detail mapping is required');
+        // }
+
+        // Visit Sections
+        // if (!formData.visitsections || formData.visitsections.length === 0) {
+        //     return toastError('At least one visit section is required');
+        // }
+
+        // File Uploads (Optional: can be required)
+        // if (!formData.uploadedFiles || formData.uploadedFiles.length === 0) {
+        //     // return toastError('Please upload at least one file');
+        // }
+
+        // Allocation
+        if (!formData.allocatedto) return toastError('Allocated To is required');
+
+        return true;
+    };
+
+    const toastError = (msg: string) => {
+        toast.error(msg);
+        return false;
+    };
+
 
     const handleSubmit = async () => {
+        if (!validateFormData()) return;
+
         console.log('Submitted:', formData);
         if (id) {
 
@@ -956,6 +1173,71 @@ const InquiryForm = () => {
     const handleChangeProductDes = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormDataProductDes({ ...formDataProductDes, [e.target.name]: e.target.value });
     };
+    const handleCustomerChange = async (newValue: any) => {
+        const res = await api.get('Customer');
+        const list: CustomerOption[] = res.data.map((cust: any) => ({
+            label: cust.customerName,
+            value: cust.id,
+            email: cust.email,
+            phoneNo: cust.phoneNo,
+            address: cust.address
+        }));
+        setCustomers(list); // Update state for UI
+
+        if (typeof newValue === 'string') {
+            // Free text input
+            setTimeout(() => {
+                setDialogValue({
+                    customerName: newValue,
+                    firstname: '',
+                    lastname: '',
+                    email: '',
+                    address: '',
+                    phoneNo: '',
+                });
+                setOpen(true);
+            });
+        } else if (newValue && newValue.inputValue) {
+            // User clicked the "Add" option
+            setDialogValue({
+                customerName: newValue.inputValue,
+                firstname: '',
+                lastname: '',
+                email: '',
+                address: '',
+                phoneNo: '',
+            });
+            setOpen(true);
+        } else if (newValue) {
+            // Existing customer selected
+            const cust = list.find(x => x.value === newValue.value); // ✅ use list, not customers
+            if (cust) {
+                setFormData((prev) => ({
+                    ...prev,
+                    customerName: cust.label,
+                    customerId: cust.value,
+                    custEmail: cust.email,
+                    custAddress: cust.address,
+                    custPhoneNo: cust.phoneNo,
+                }));
+            }
+        } else {
+            // Cleared input
+            setFormData((prev) => ({
+                ...prev,
+                customerName: '',
+                customerId: 0
+            }));
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            cpfirstName: formData.customerName,
+            cplastName: formData.cplastName,
+        }));
+    };
+
+
 
 
     const handleOpenProductDes = () => setOpenProductDes(true);
@@ -974,14 +1256,14 @@ const InquiryForm = () => {
         }
 
         if (editIndexVisit !== null) {
-            // Update existing row in formData.visitSection
+            // Update existing row in formData.visitsections
             setFormData((prevData: any) => {
-                const updatedVisitSection = [...prevData.visitSection];
-                updatedVisitSection[editIndexVisit] = { ...formDataProductDes }; // Update the specific row
+                const updatedvisitsections = [...prevData.visitsections];
+                updatedvisitsections[editIndexVisit] = { ...formDataProductDes }; // Update the specific row
 
                 return {
                     ...prevData,
-                    visitSection: updatedVisitSection,
+                    visitsections: updatedvisitsections,
                 };
             });
 
@@ -997,10 +1279,10 @@ const InquiryForm = () => {
         else {
             // Add new row to form data
             setFormData((prevData: any) => {
-                const updatedVisitSection = [...prevData.visitSection, { ...formDataProductDes }];
+                const updatedvisitsections = [...prevData.visitsections || [], { ...formDataProductDes }];
                 return {
                     ...prevData,
-                    visitSection: updatedVisitSection,
+                    visitsections: updatedvisitsections,
                 };
             });
 
@@ -1010,7 +1292,7 @@ const InquiryForm = () => {
 
         // Reset form
         setFormDataProductDes({
-            visitSectionId: 0,
+            visitsectionsId: 0,
             inquiryId: 0,
             visitDate: '',
             visitReason: '',
@@ -1037,7 +1319,7 @@ const InquiryForm = () => {
 
     const handleSubmitCust = async () => {
         try {
-            await api.post('Customer', {
+            const response = await api.post('Customer', {
                 id: 0,
                 customerName: dialogValue.customerName,
                 email: dialogValue.email,
@@ -1045,26 +1327,23 @@ const InquiryForm = () => {
                 address: dialogValue.address,
                 city: '',
                 region: ''
-
             });
 
-            await fetchCustomers(); // Refresh list
+            const newCustomer = response.data;
 
+            const updatedCustomers: CustomerOption[] = await fetchCustomers();
+            const added = updatedCustomers.find(c => c.value === newCustomer.id);
 
-            setFormData(prev => ({
-                ...prev,
-                customerName: dialogValue.customerName,
-                customerId: 0, // Update if API returns new ID
-                email: dialogValue.email,
-                phoneNo: dialogValue.phoneNo,
-                address: dialogValue.address,
-            }));
+            if (added) {
+                handleCustomerChange(added);
+            }
 
             setOpen(false);
         } catch (error) {
             console.error('Failed to add customer:', error);
         }
     };
+
     return (
         <Box sx={{ p: 0 }}>
             <Card sx={{ mt: '6px' }}>
@@ -1073,7 +1352,7 @@ const InquiryForm = () => {
                         Inquiry Form
                     </Typography>
                     <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, sm: 3 }} >
+                        <Grid size={{ xs: 12, sm: 2 }} >
                             <TextField
                                 fullWidth
                                 label="Enquiry No"
@@ -1087,7 +1366,7 @@ const InquiryForm = () => {
                                 }}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 3 }} >
+                        <Grid size={{ xs: 12, sm: 2 }} >
                             <TextField
                                 fullWidth
                                 label="Enquiry Date"
@@ -1097,6 +1376,58 @@ const InquiryForm = () => {
                                 value={
                                     formData.enquiryDate
                                         ? new Date(formData.enquiryDate).toISOString().split('T')[0]
+                                        : ''}
+                                onChange={handleChange}
+                                slotProps={{
+                                    inputLabel: {
+                                        shrink: true,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 2 }} >
+                            <TextField
+                                fullWidth
+                                label="Customer RFQ No"
+                                name="customerRfqno"
+                                value={formData.customerRfqno}
+                                onChange={handleChange}
+                                slotProps={{
+                                    inputLabel: {
+                                        shrink: true,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 2 }} >
+                            <TextField
+                                fullWidth
+                                label="Customer RFQ Date"
+                                name="customerRfqdate"
+                                type="date"
+                                // value={formData.enquiryDate}
+                                value={
+                                    formData.customerRfqdate
+                                        ? new Date(formData.customerRfqdate).toISOString().split('T')[0]
+                                        : ''}
+                                onChange={handleChange}
+                                slotProps={{
+                                    inputLabel: {
+                                        shrink: true,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 2 }} >
+                            <TextField
+                                fullWidth
+                                label="Offer Due Date"
+                                name="offerDueDate"
+                                type="date"
+                                // value={formData.enquiryDate}
+                                value={
+                                    formData.offerDueDate
+                                        ? new Date(formData.offerDueDate).toISOString().split('T')[0]
                                         : ''}
                                 onChange={handleChange}
                                 slotProps={{
@@ -1156,47 +1487,8 @@ const InquiryForm = () => {
                                         ? { label: formData.customerName, value: formData.customerId, address: formData.custAddress, email: formData.custEmail, phoneNo: formData.custPhoneNo }
                                         : null
                                 }
-                                onChange={(event, newValue) => {
-                                    if (typeof newValue === 'string') {
-                                        // Free text input
-                                        setTimeout(() => {
-                                            setDialogValue({
-                                                customerName: newValue,
-                                                email: '',
-                                                address: '',
-                                                phoneNo: '',
-                                            });
-                                            setOpen(true);
-                                        });
-                                    } else if (newValue && newValue.inputValue) {
-                                        // User clicked the "Add" option
-                                        setDialogValue({
-                                            customerName: newValue.inputValue,
-                                            email: '',
-                                            address: '',
-                                            phoneNo: '',
-                                        });
-                                        setOpen(true);
-                                    } else if (newValue) {
-                                        // Existing customer selected
-                                        let custt = customers.filter(x => x.value == newValue.value)[0];
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            customerName: newValue.label,
-                                            customerId: newValue.value,
-                                            custEmail: custt.email,
-                                            custAddress: custt.address,
-                                            custPhoneNo: custt.phoneNo,
-                                        }));
-                                    } else {
-                                        // Cleared input
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            customerName: '',
-                                            customerId: 0
-                                        }));
-                                    }
-                                }}
+                                onChange={(event, newValue) => handleCustomerChange(newValue)}
+
                                 renderInput={(params) => (
                                     <TextField {...params} label="Customer Name" variant="outlined" />
                                 )}
@@ -1229,7 +1521,7 @@ const InquiryForm = () => {
                                 onChange={handleChange}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 3 }} >
+                        {/* <Grid size={{ xs: 12, sm: 3 }} >
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Region</InputLabel>
                                 <Select
@@ -1245,7 +1537,35 @@ const InquiryForm = () => {
                                     ))}
                                 </Select>
                             </FormControl>
+                        </Grid> */}
+
+                        {/* Region */}
+                        <Grid size={{ xs: 12, sm: 3 }}>
+                            <Autocomplete
+                                freeSolo
+                                options={regions}
+                                getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                                value={formData.region}
+                                onChange={handleEnumChangeValue(ListOfValueType.Region, setFormData)}
+                                filterOptions={(options, params): { label: string; value: number }[] => {
+                                    const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
+
+                                    if (params.inputValue !== '') {
+                                        filtered.push({
+                                            label: `Add "${params.inputValue}"`,
+                                            value: -1,
+                                            inputValue: params.inputValue
+                                        } as any);
+                                    }
+
+                                    return filtered;
+                                }}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Region" variant="outlined" />
+                                )}
+                            />
                         </Grid>
+
 
                         <Grid size={{ xs: 12, sm: 3 }} >
                             <Autocomplete
@@ -1325,23 +1645,33 @@ const InquiryForm = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 3 }} >
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel>Country</InputLabel>
-                                <Select
-                                    label="Country"
-                                    name="country"
-                                    value={formData.country}
-                                    onChange={handleChange}
-                                >
-                                    {countryOptions.map((option) => (
-                                        <MenuItem key={option} value={option}>
-                                            {option}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                        {/* country */}
+                        <Grid size={{ xs: 12, sm: 3 }}>
+                            <Autocomplete
+                                freeSolo
+                                options={country}
+                                getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                                value={formData.country}
+                                onChange={handleEnumChangeValue(ListOfValueType.Country, setFormData)}
+                                filterOptions={(options, params): { label: string; value: number }[] => {
+                                    const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
+
+                                    if (params.inputValue !== '') {
+                                        filtered.push({
+                                            label: `Add "${params.inputValue}"`,
+                                            value: -1,
+                                            inputValue: params.inputValue
+                                        } as any);
+                                    }
+
+                                    return filtered;
+                                }}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Country" variant="outlined" />
+                                )}
+                            />
                         </Grid>
+
                     </Grid>
 
                     <SectionHeader title="Contact Person" />
@@ -1399,7 +1729,7 @@ const InquiryForm = () => {
                                 Add Details
                             </Button>
                             <Box sx={{ overflowX: 'auto', width: 1580 }}>
-                                {formData.techicalDetailsMapping.length > 0 && (
+                                {formData.technicaldetailsmappings && formData.technicaldetailsmappings.length > 0 && (
                                     <TableContainer sx={{
                                         maxHeight: 300,
                                         minWidth: 'fit-content',
@@ -1440,7 +1770,7 @@ const InquiryForm = () => {
                                                     <TableCell>EncoderMountingIfYes</TableCell>
                                                     <TableCell>Application</TableCell>
                                                     <TableCell>Segment</TableCell>
-                                                    <TableCell>Amount</TableCell>
+                                                    {/* <TableCell>Amount</TableCell> */}
                                                     <TableCell>Total Amt</TableCell>
                                                     <TableCell>Product Description</TableCell>
                                                     <TableCell>Delivery TIme</TableCell>
@@ -1448,7 +1778,7 @@ const InquiryForm = () => {
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {formData.techicalDetailsMapping.map((brand, index) => (
+                                                {formData.technicaldetailsmappings.map((brand, index) => (
                                                     <TableRow key={index}>
                                                         <TableCell>
                                                             <Button
@@ -1494,20 +1824,20 @@ const InquiryForm = () => {
                                                         <TableCell>{brand.encoderMountingIfYes}</TableCell>
                                                         <TableCell>{brand.application}</TableCell>
                                                         <TableCell>{brand.segment}</TableCell>
-                                                        <TableCell>
+                                                        {/* <TableCell>
                                                             {new Intl.NumberFormat('en-IN', {
                                                                 style: 'currency',
                                                                 currency: 'INR',
                                                                 maximumFractionDigits: 2,
                                                             }).format(+brand.amount)}
-                                                        </TableCell>
+                                                        </TableCell> */}
 
                                                         <TableCell>
                                                             {new Intl.NumberFormat('en-IN', {
                                                                 style: 'currency',
                                                                 currency: 'INR',
                                                                 maximumFractionDigits: 2,
-                                                            }).format(+brand.amount * +brand.quantity)}
+                                                            }).format(+brand.amount)}
                                                         </TableCell>
                                                         <TableCell>{brand.narration}</TableCell>
                                                         <TableCell>{brand.deliveryTime}</TableCell>
@@ -1602,17 +1932,17 @@ const InquiryForm = () => {
                     </Grid>
                     {/* Pricing Section */}
                     <Grid container spacing={2} sx={{ mt: 3 }}>
-                        <Grid size={{ xs: 12, sm: 3 }} >
+                        {/*   <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
                                 label="List Price"
                                 name="listPrice"
-                                type="number"
                                 value={formData.listPrice}
                                 onChange={handleChange}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 3 }} >
+                        */}
+                        {/*  <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
                                 label="Discount"
@@ -1622,6 +1952,7 @@ const InquiryForm = () => {
                                 onChange={handleChange}
                             />
                         </Grid>
+                           */}
                         {/* <Grid size={{ xs: 12, sm: 3 }} >
                             <TextField
                                 fullWidth
@@ -1632,26 +1963,35 @@ const InquiryForm = () => {
                                 onChange={handleChange}
                             />
                         </Grid> */}
-                        <Grid size={{ xs: 12, sm: 3 }} >
+
+                        <Grid size={{ xs: 12, sm: 3 }}>
                             <TextField
                                 fullWidth
                                 label="Total Package"
                                 name="totalPackage"
-                                type="text" // Change to text to show formatted string
-                                value={formatRupee(formData.totalPackage || 0)}
+                                type="text"
+                                value={formatNumberWithCommas(formData.totalPackage || '0')}
                                 onChange={(e) => {
-                                    // Remove non-numeric characters and commas
-                                    const numericValue = e.target.value.replace(/[^\d.]/g, '');
+                                    // Remove non-digit characters except dot (.)
+                                    const rawValue = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
                                     handleChange({
                                         target: {
                                             name: 'totalPackage',
-                                            value: numericValue,
+                                            value: rawValue,
                                         },
                                     });
                                 }}
-
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            {formData.selectedCurrency === 'INR' ? '₹' : '$'}
+                                        </InputAdornment>
+                                    ),
+                                    inputMode: 'numeric'
+                                }}
                             />
                         </Grid>
+
                     </Grid>
 
                 </CardContent>
@@ -1720,7 +2060,7 @@ const InquiryForm = () => {
                             </Button>
                         </Grid>
                     </Grid>
-                    {formData.visitSection.length > 0 && (
+                    {formData.visitsections && formData.visitsections.length > 0 && (
                         <TableContainer component={Paper}>
                             <Table size="small">
                                 <TableHead>
@@ -1735,11 +2075,11 @@ const InquiryForm = () => {
 
                                 </TableHead>
                                 <TableBody>
-                                    {formData.visitSection.map((entry, index) => (
+                                    {formData.visitsections.map((entry, index) => (
                                         <TableRow key={index}>
                                             <TableCell><Button
                                                 color="primary"
-                                                onClick={() => handleEditVisitSection(index)}
+                                                onClick={() => handleEditvisitsections(index)}
                                                 startIcon={<Edit />}
                                             >
                                             </Button></TableCell>
@@ -1819,8 +2159,17 @@ const InquiryForm = () => {
                 <CardContent>
                     <SectionHeader title="Status" />
                     <Grid container spacing={2}>
-                        {/* Inquiry Main Fields */}
                         <Grid size={{ xs: 12, sm: 4 }} >
+                            <TextField
+                                fullWidth
+                                label="Allocated to"
+                                name="allocatedto"
+                                value={formData.allocatedto}
+                                onChange={handleChange}
+                            />
+                        </Grid>
+                        {/* Inquiry Main Fields */}
+                        <Grid size={{ xs: 12, sm: 2 }} >
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Status</InputLabel>
                                 <Select
@@ -1839,37 +2188,7 @@ const InquiryForm = () => {
                         </Grid>
                         {formData.status == 'Offer Sent' && (
                             <>
-                                <Grid size={{ xs: 12, sm: 4 }} >
-                                    <TextField
-                                        fullWidth
-                                        label="RFQ No"
-                                        name="rfqNo"
-                                        type="number"
-                                        value={formData.rfqNo}
-                                        slotProps={{
-                                            input: {
-                                                readOnly: true,
-                                            },
-                                        }}
-                                        onChange={handleChange}
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 4 }} >
-                                    <TextField
-                                        fullWidth
-                                        label="RFQ Date"
-                                        type="date"
-                                        name="rfqDate"
-                                        value={formData.rfqDate}
-                                        onChange={handleChange}
-                                        slotProps={{
-                                            inputLabel: {
-                                                shrink: true,
-                                            },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 4 }} >
+                                <Grid size={{ xs: 12, sm: 2 }} >
                                     <FormControl fullWidth variant="outlined">
                                         <InputLabel>Offer Status</InputLabel>
                                         <Select
@@ -1886,7 +2205,55 @@ const InquiryForm = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
+
+                                <Grid size={{ xs: 12, sm: 2 }} >
+                                    <TextField
+                                        fullWidth
+                                        label="RFQ No"
+                                        name="rfqNo "
+                                        value={formData.rfqNo}
+                                        onChange={handleChange}
+                                        slotProps={{
+                                            input: {
+                                                readOnly: true,
+                                            },
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 2 }} >
+                                    <TextField
+                                        fullWidth
+                                        label="RFQ Date"
+                                        name="rfqDate"
+                                        type="date"
+                                        // value={formData.enquiryDate}
+                                        value={
+                                            formData.rfqDate
+                                                ? new Date(formData.rfqDate).toISOString().split('T')[0]
+                                                : ''}
+                                        onChange={handleChange}
+                                        slotProps={{
+                                            inputLabel: {
+                                                shrink: true,
+                                            },
+                                        }}
+                                    />
+                                </Grid>
+
+                                {formData.offerStatus === 'Lost' && (
+                                    <Grid size={{ xs: 12, sm: 4 }} >
+                                        <TextField
+                                            fullWidth
+                                            label="Lost Reason"
+                                            name="lostReason"
+                                            value={formData.lostReason}
+                                            onChange={handleChange}
+                                        />
+                                    </Grid>
+                                )}
+
                             </>)}
+
 
 
 
@@ -1951,6 +2318,16 @@ const InquiryForm = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
+                        {/* Pole */}
+                        <Grid size={{ xs: 12, sm: 2 }} >
+                            <CustomSelect
+                                label="Pole"
+                                name="pole"
+                                value={brandInput.pole}
+                                options={poleOptions}
+                                onChange={handleBrandChange}
+                            />
+                        </Grid>
                         <Grid size={{ xs: 12, sm: 2 }} >
                             <FormControl fullWidth>
                                 <TextField
@@ -1963,6 +2340,20 @@ const InquiryForm = () => {
                                 />
                             </FormControl>
                         </Grid>
+                        {brandInput.pole?.includes('/') && (
+                            <Grid size={{ xs: 12, sm: 2 }} >
+                                <FormControl fullWidth>
+                                    <TextField
+                                        fullWidth
+                                        label="KW2"
+                                        name="kw2"
+                                        value={brandInput.kw2}
+                                        onChange={handleBrandChange}
+                                        inputMode="decimal" // Directly use inputMode here
+                                    />
+                                </FormControl>
+                            </Grid>
+                        )}
                         <Grid size={{ xs: 12, sm: 2 }} >
                             <FormControl fullWidth>
                                 <TextField
@@ -1975,7 +2366,21 @@ const InquiryForm = () => {
                                 />
                             </FormControl>
                         </Grid>
-
+                        {/* Conditionally Show KW Field */}
+                        {brandInput.pole?.includes('/') && (
+                            <Grid size={{ xs: 12, sm: 2 }} >
+                                <FormControl fullWidth>
+                                    <TextField
+                                        fullWidth
+                                        label="HP2"
+                                        name="hp2"
+                                        value={brandInput.hp2}
+                                        onChange={handleBrandChange}
+                                        inputMode="decimal" // Directly use inputMode here
+                                    />
+                                </FormControl>
+                            </Grid>
+                        )}
                         {/* Phase */}
                         <Grid size={{ xs: 12, sm: 2 }} >
                             <CustomSelect
@@ -1987,16 +2392,7 @@ const InquiryForm = () => {
                             />
                         </Grid>
 
-                        {/* Pole */}
-                        <Grid size={{ xs: 12, sm: 2 }} >
-                            <CustomSelect
-                                label="Pole"
-                                name="pole"
-                                value={brandInput.pole}
-                                options={poleOptions}
-                                onChange={handleBrandChange}
-                            />
-                        </Grid>
+
                         <Grid size={{ xs: 12, sm: 2 }} >
                             <FormControl fullWidth variant="outlined">
                                 <InputLabel>Type of Start</InputLabel>
@@ -2203,18 +2599,18 @@ const InquiryForm = () => {
                                             onChange={handleBrandChange}
                                         />
                                     </Grid>
-
-                                    <Grid size={{ xs: 12, sm: 4 }} >
-                                        <TextField
-                                            fullWidth
-                                            label="Hazardous Area Description"
-                                            name="hardadousDescription"
-                                            value={brandInput.hardadousDescription}
-                                            onChange={handleBrandChange}
-                                        />
-                                    </Grid>
                                 </>
                             )}
+
+                            <Grid size={{ xs: 12, sm: 4 }} >
+                                <TextField
+                                    fullWidth
+                                    label="Area Description"
+                                    name="hardadousDescription"
+                                    value={brandInput.hardadousDescription}
+                                    onChange={handleBrandChange}
+                                />
+                            </Grid>
 
                             {/* Duty */}
                             <Grid size={{ xs: 12, sm: 4 }} >
@@ -2318,9 +2714,71 @@ const InquiryForm = () => {
                                     freeSolo
                                     multiple
                                     options={accessories}
-                                    getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
-                                    value={brandInput.accessories || []}
+                                    getOptionLabel={(option) =>
+                                        typeof option === 'string' ? option : option.label
+                                    }
+                                    // value={
+                                    //     typeof brandInput.accessories === 'string'
+                                    //         ? brandInput.accessories.split(',').map((item: string) => ({
+                                    //             label: item.trim(),
+                                    //             value: 0,
+                                    //         }))
+
+                                    //         : Array.isArray(brandInput.accessories)
+                                    //             ? brandInput.accessories.map((item) =>
+                                    //                 typeof item === 'string'
+                                    //                     ? { label: item.trim(), value: 0 }
+                                    //                     : item
+                                    //             )
+                                    //             : []
+                                    // }
+                                    value={
+                                        typeof brandInput.accessories === 'string'
+                                            ? brandInput.accessories.split(',').map((item: string) => ({
+                                                label: item.trim(),
+                                                value: 0,
+                                            }))
+                                            : Array.isArray(brandInput.accessories)
+                                                ? brandInput.accessories.map((item: string) => ({
+                                                    label: item.trim(),
+                                                    value: 0,
+                                                }))
+                                                : []
+                                    }
+
                                     onChange={handleMultiEnumChangeValue(ListOfValueType.Accessories, setBrandInput)}
+                                    filterOptions={(options, params) => {
+                                        const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
+
+                                        const isExisting = options.some(
+                                            (option) => option.label.toLowerCase() === params.inputValue.toLowerCase()
+                                        );
+
+                                        if (params.inputValue !== '' && !isExisting) {
+                                            filtered.push({
+                                                label: `Add "${params.inputValue}"`,
+                                                value: -1,
+                                                inputValue: params.inputValue,
+                                            } as any);
+                                        }
+
+                                        return filtered;
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField {...params} label="Accessories" variant="outlined" />
+                                    )}
+                                />
+
+                            </Grid>
+
+                            {/* Non-Standard Features */}
+                            <Grid size={{ xs: 12, sm: 4 }} >
+                                <Autocomplete
+                                    freeSolo
+                                    options={nonStandardFeatures}
+                                    getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                                    value={brandInput.nonStandardFeatures}
+                                    onChange={handleEnumChangeValue(ListOfValueType.NonStandardFeatures, setBrandInput)}
                                     filterOptions={(options, params): { label: string; value: number }[] => {
                                         const filtered = createFilterOptions<{ label: string; value: number }>()(options, params);
 
@@ -2335,13 +2793,10 @@ const InquiryForm = () => {
                                         return filtered;
                                     }}
                                     renderInput={(params) => (
-                                        <TextField {...params} label="Accessories" variant="outlined" />
+                                        <TextField {...params} label="Non-Standard Features" variant="outlined" />
                                     )}
-
-
                                 />
                             </Grid>
-
                             {/* Brake */}
                             <Grid size={{ xs: 12, sm: 4 }} >
                                 <CustomSelect
@@ -2429,6 +2884,76 @@ const InquiryForm = () => {
                                     )}
                                 />
                             </Grid>
+
+                            <Grid size={{ xs: 12, sm: 1 }}>
+                                <Autocomplete
+                                    disableClearable
+                                    options={currncyOptions}
+                                    value={formData.selectedCurrency}
+                                    onChange={(event, newValue) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            selectedCurrency: newValue
+                                        }));
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField {...params} label="Currency" fullWidth name="selectedCurrency" />
+                                    )}
+                                />
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 1 }}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={formData.isListPrice} // bind to formData
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    isListPrice: e.target.checked // update formData
+                                                }))
+                                            }
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Is List Price?"
+                                />
+                            </Grid>
+
+                               {formData.isListPrice == true && (
+                            <>
+
+                            <Grid size={{ xs: 12, sm: 2 }}>
+                                <TextField
+                                    fullWidth
+                                    label="List Price"
+                                    name="techDetailsListPrice"
+                                    value={brandInput.techDetailsListPrice}
+                                    onChange={handleBrandChange}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                {formData.selectedCurrency === 'INR' ? '₹' : '$'}
+                                            </InputAdornment>
+                                        ),
+                                        inputMode: 'numeric'
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 4 }} >
+                                <TextField
+                                    fullWidth
+                                    label="Discount"
+                                    name="techDetailsDiscount"
+                                    // type="number"
+                                    value={brandInput.techDetailsDiscount}
+                                    onChange={handleBrandChange}
+                                />
+                            </Grid>
+                            </>
+                            )}
+
                             <Grid size={{ xs: 12, sm: 4 }} >
                                 <TextField
                                     fullWidth
@@ -2436,8 +2961,17 @@ const InquiryForm = () => {
                                     name="amount"
                                     value={brandInput.amount}
                                     onChange={handleBrandChange}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                {formData.selectedCurrency === 'INR' ? '₹' : '$'}
+                                            </InputAdornment>
+                                        ),
+                                        inputMode: 'numeric'
+                                    }}
                                 />
                             </Grid>
+
                         </Grid>
 
                         <Grid size={{ xs: 12 }} >
@@ -2486,6 +3020,26 @@ const InquiryForm = () => {
                                 value={dialogValue.customerName}
                                 onChange={(e) =>
                                     setDialogValue({ ...dialogValue, customerName: e.target.value })
+                                }
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <TextField
+                                label="First Name"
+                                fullWidth
+                                value={dialogValue.firstname}
+                                onChange={(e) =>
+                                    setDialogValue({ ...dialogValue, firstname: e.target.value })
+                                }
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <TextField
+                                label="Last Name"
+                                fullWidth
+                                value={dialogValue.lastname}
+                                onChange={(e) =>
+                                    setDialogValue({ ...dialogValue, lastname: e.target.value })
                                 }
                             />
                         </Grid>

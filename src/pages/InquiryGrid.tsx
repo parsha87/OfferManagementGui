@@ -56,7 +56,11 @@ interface InquiryFormData {
   custPhoneNo: string;
   custAddress: string;
   custEmail: string;
-  techicalDetailsMapping: MotorMapping[];
+  customerRfqno: string;
+  lostReason: string;
+  customerRfqdate: Date;
+  offerDueDate: Date;
+  technicaldetailsmappings: MotorMapping[];
 }
 
 
@@ -159,7 +163,11 @@ const InquiryGrid = () => {
     custPhoneNo: '',
     custAddress: '',
     custEmail: '',
-    techicalDetailsMapping: [],
+    customerRfqno: '',
+    lostReason: '',
+    customerRfqdate: new Date(),
+    offerDueDate: new Date(),
+    technicaldetailsmappings: [],
   });
 
 
@@ -194,7 +202,11 @@ const InquiryGrid = () => {
     custPhoneNo: '',
     custAddress: '',
     custEmail: '',
-    techicalDetailsMapping: [],
+    customerRfqno: '',
+    lostReason: '',
+    customerRfqdate: new Date(),
+    offerDueDate: new Date(),
+    technicaldetailsmappings: [],
   });
 
   useEffect(() => {
@@ -346,7 +358,7 @@ const InquiryGrid = () => {
 
       setLoading(true); // Show the loader
 
-      formData.techicalDetailsMapping = selectedTechnicalDetails;
+      formData.technicaldetailsmappings = selectedTechnicalDetails;
 
       const formDataToSend = new FormData();
       formDataToSend.append("model", JSON.stringify(formData)); // Add only model data
@@ -365,7 +377,7 @@ const InquiryGrid = () => {
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = formData.enquiryNo +'.pdf';
+      link.download = formData.enquiryNo + '.pdf';
       document.body.appendChild(link); // Append to body to ensure it works in all browsers
       link.click();
       link.remove();
@@ -405,7 +417,7 @@ const InquiryGrid = () => {
           <IconButton
             color="info"
             size="small"
-            onClick={() => handleOpenTechnicalDetails(params.row.techicalDetailsMapping ?? [], params.row)}
+            onClick={() => handleOpenTechnicalDetails(params.row.technicaldetailsmappings ?? [], params.row)}
           >
             <VisibilityIcon />
           </IconButton>
@@ -420,7 +432,7 @@ const InquiryGrid = () => {
           {/* <IconButton
             color="info"
             size="small"
-          // onClick={() => handleExportPDF(params.row, params.row.techicalDetailsMapping ?? [])}
+          // onClick={() => handleExportPDF(params.row, params.row.technicaldetailsmappings ?? [])}
           // onClick={() => handlePrintPDF}
           >
             <PictureAsPdfIcon />
@@ -458,33 +470,35 @@ const InquiryGrid = () => {
         return `${day}/${month}/${year}`;
       },
     },
-    {
-      field: 'listPrice',
-      headerName: 'List Price',
-      width: 120,
-      valueFormatter: (params) => {
-        const value = Number(params);
-        return isNaN(value)
-          ? ''
-          : value.toLocaleString('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            minimumFractionDigits: 2,
-          });
-      },
-    },
-    { field: 'discount', headerName: 'Discount', width: 120 },
+    // {
+    //   field: 'listPrice',
+    //   headerName: 'List Price',
+    //   width: 120,
+    //   valueFormatter: (params) => {
+    //     const value = Number(params);
+    //     return isNaN(value)
+    //       ? ''
+    //       : value.toLocaleString('en-IN', {
+    //         style: 'currency',
+    //         currency: 'INR',
+    //         minimumFractionDigits: 2,
+    //       });
+    //   },
+    // },
+    // { field: 'discount', headerName: 'Discount', width: 120 },
     {
       field: 'totalPackage',
       headerName: 'Total Package',
       width: 150,
-      valueFormatter: (params) => {
-        const value = Number(params);
+      valueFormatter: (params: GridRenderCellParams<any>) => {
+        const value = Number(params); // ✅ FIXED: get actual value
+        const currency = params.row?.selectedCurrency || 'INR'; // use optional chaining just in case
+
         return isNaN(value)
           ? ''
-          : value.toLocaleString('en-IN', {
+          : value.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
             style: 'currency',
-            currency: 'INR',
+            currency: currency,
             minimumFractionDigits: 2,
           });
       },
@@ -492,6 +506,12 @@ const InquiryGrid = () => {
     { field: 'status', headerName: 'Status', width: 120 },
     { field: 'offerStatus', headerName: 'Offer Status', width: 120 }
   ];
+
+  const getCurrencyByInquiryId = (id: number, data: any[]): string => {
+  const record = data.find((row) => row.inquiryId === id);
+  return record?.selectedCurrency || 'INR'; // default to INR if not found
+};
+
 
   const technicalDetailsColumns: GridColDef[] = [
     // { field: 'motorType', headerName: 'Motor Type', width: 130 },
@@ -533,9 +553,8 @@ const InquiryGrid = () => {
   ];
 
   return (
-
     <>
-      {/* Full-screen Loader Overlay */}
+      {/* Full-screen Loader */}
       {loading && (
         <Box
           sx={{
@@ -544,54 +563,59 @@ const InquiryGrid = () => {
             left: 0,
             width: '100vw',
             height: '100vh',
-            backgroundColor: 'rgba(255,255,255,0.7)',
+            backgroundColor: 'rgba(255,255,255,0.6)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            zIndex: 9999,
+            zIndex: 1300,
           }}
         >
-          <CircularProgress size={80} thickness={5} />
+          <CircularProgress size={70} thickness={4.5} color="primary" />
         </Box>
       )}
 
-      <Box mt={3}>
-        {/* Top bar with Add button */}
-        <Box display="flex" justifyContent="flex-start" mb={2}>
-          {/* Add Button */}
-          <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}
-          >
+      <Box mt={3} px={3}>
+        {/* Top Action Bar */}
+        <Box
+          display="flex"
+          flexWrap="wrap"
+          alignItems="center"
+          justifyContent="space-between"
+          gap={2}
+          mb={2}
+        >
+          <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}>
             Add Inquiry
           </Button>
 
-          <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}>
-            {/* Filters */}
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+          <Box display="flex" gap={2} flexWrap="wrap">
+            <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel shrink>Customer Type</InputLabel>
               <Select
                 label="Customer Type"
-                name="customerType"
                 value={customerTypeFilter}
                 onChange={customerTypeChange}
                 displayEmpty
-                renderValue={(selected) => selected === "" ? "All" : selected}             >
+                renderValue={(selected) => (selected === '' ? 'All' : selected)}
+              >
                 <MenuItem value="">All</MenuItem>
-                {customerTypeOptions.map((customerType) => (
-                  <MenuItem key={customerType} value={customerType}>
-                    {customerType}
+                {customerTypeOptions.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+
+            <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel shrink>Region</InputLabel>
               <Select
+                label="Region"
                 value={regionFilter}
                 onChange={handleRegionChange}
                 displayEmpty
-                label="Region"
-                name="regionFilter"
-                renderValue={(selected) => selected === "" ? "All" : selected}             >
+                renderValue={(selected) => (selected === '' ? 'All' : selected)}
+              >
                 <MenuItem value="">All</MenuItem>
                 {regionOptions.map((region) => (
                   <MenuItem key={region} value={region}>
@@ -600,32 +624,34 @@ const InquiryGrid = () => {
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+
+            <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel shrink>Customer Name</InputLabel>
               <Select
+                label="Customer Name"
                 value={customerNameFilter}
                 onChange={customerNameChange}
                 displayEmpty
-                label="Customer Name"
-                name="customerNameFilter"
-                renderValue={(selected) => selected === "" ? "All" : selected}            >
+                renderValue={(selected) => (selected === '' ? 'All' : selected)}
+              >
                 <MenuItem value="">All</MenuItem>
-                {customerNameOptions.map((customerName) => (
-                  <MenuItem key={customerName} value={customerName}>
-                    {customerName}
+                {customerNameOptions.map((name) => (
+                  <MenuItem key={name} value={name}>
+                    {name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+
+            <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel shrink>Status</InputLabel>
               <Select
+                label="Status"
                 value={statusFilter}
                 onChange={handleStatusChange}
                 displayEmpty
-                label="Status"
-                name="statusFilter"
-                renderValue={(selected) => selected === "" ? "All" : selected}             >
+                renderValue={(selected) => (selected === '' ? 'All' : selected)}
+              >
                 <MenuItem value="">All</MenuItem>
                 {statusOptions.map((status) => (
                   <MenuItem key={status} value={status}>
@@ -634,15 +660,15 @@ const InquiryGrid = () => {
                 ))}
               </Select>
             </FormControl>
-          </Box>
 
-          <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} ml={2}></Box>
-          <Button variant="contained" color="primary" onClick={resetFilters}>
-            Reset Filters
-          </Button>
+            <Button variant="outlined" color="secondary" onClick={resetFilters}>
+              Reset Filters
+            </Button>
+          </Box>
         </Box>
-        {/* Scrollable wrapper for table */}
-        <Box sx={{ overflowX: 'auto', width: '100%' }}>
+
+        {/* Data Table */}
+        <Box sx={{ width: '100%', overflowX: 'auto' }}>
           <Box sx={{ minWidth: 1200 }}>
             <DataGrid
               rows={rows}
@@ -650,20 +676,24 @@ const InquiryGrid = () => {
               getRowId={(row) => row.inquiryId}
               paginationModel={{ pageSize: 10, page: 0 }}
               pageSizeOptions={[10, 20, 50]}
-              loading={loading} // 🔥 this enables the DataGrid's built-in loading UI
+              loading={loading}
+              autoHeight
+              disableRowSelectionOnClick
+              sx={{
+                '& .MuiDataGrid-cell': {
+                  whiteSpace: 'nowrap',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: '#f5f5f5',
+                },
+              }}
             />
           </Box>
-
-
         </Box>
 
+
         {/* Modal for Technical Details */}
-        <Modal
-          open={openModal}
-          onClose={handleCloseModal}
-          aria-labelledby="technical-details-title"
-          aria-describedby="technical-details-description"
-        >
+        <Modal open={openModal} onClose={handleCloseModal}>
           <Box
             sx={{
               position: 'absolute',
@@ -680,28 +710,19 @@ const InquiryGrid = () => {
             }}
           >
             <SectionHeader title="Offer Details" />
-            {/* Close Button in Top-Right */}
             <IconButton
               onClick={handleCloseModal}
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                color: 'grey.700',
-              }}
+              sx={{ position: 'absolute', top: 8, right: 8 }}
             >
-              <GridCloseIcon /> {/* You can replace this with any icon, like ArrowDropUp or custom triangle */}
+              <GridCloseIcon />
             </IconButton>
 
-
-            {/* Image and Download Button in one line */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', my: 2 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
               <img
-                src="src/assets/offerImage.jpg" // ✅ Corrected path for public folder
+                src="src/assets/offerImage.jpg"
                 alt="Offer Preview"
-                style={{ maxHeight: '100%', borderRadius: 4 }}
+                style={{ maxHeight: 150, borderRadius: 4 }}
               />
-
               <Button
                 variant="contained"
                 color="secondary"
@@ -712,182 +733,129 @@ const InquiryGrid = () => {
               </Button>
             </Box>
 
-            {/* Custom Offer Header Table */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <table style={{ borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={cellStyle}>OFFER<br />NUMBER</th>
-                    <th style={cellStyle}>DATE</th>
-                    {/* <th style={cellStyle}>PAGE</th> */}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={cellStyle}>{formData.enquiryNo}</td>
-                    <td style={cellStyle}>{new Date().toLocaleDateString()}</td>
-                    {/* <td style={cellStyle}>1</td> */}
-                  </tr>
-                </tbody>
-              </table>
-            </Box>
-
-
-            <Box sx={{ width: '100%', mb: 2 }}>
+            <Box mb={2}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr>
-
-                    <td style={{ ...cellStyleHeader, width: '50%' }}>
-                      CUSTOMER NAME : {formData.customerName}
-                    </td>
-                    <td style={{ ...cellStyleHeader, width: '50%' }}>SHIPPED TO TO: {formData.custAddress}</td>
+                    <td style={cellStyleHeader}>CUSTOMER NAME: {formData.customerName}</td>
+                    <td style={cellStyleHeader}>SHIPPED TO: {formData.custAddress}</td>
                   </tr>
                   <tr>
-                    <td style={cellStyleValue}>ATTENTION: {formData.salutation + formData.cpfirstName + formData.cplastName}</td>
-                    <td style={cellStyleValue}>INQUIRY DATE: {new Date(formData.enquiryDate).toLocaleDateString()}</td>
+                    <td style={cellStyleValue}>
+                      ATTENTION: {`${formData.salutation} ${formData.cpfirstName} ${formData.cplastName}`}
+                    </td>
+                    <td style={cellStyleValue}>
+                      INQUIRY DATE: {new Date(formData.enquiryDate).toLocaleDateString()}
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </Box>
 
-            {/* Scrollable Technical Data Table */}
-            <Box>
-
-              {/* Technical Data Table without horizontal scroll */}
-              <Box sx={{ width: '100%', overflow: 'auto' }}>
-                <Box
-                  sx={{
-                    '& .MuiDataGrid-root': {
-                      border: '2px solid black',
-                    },
-                    '& .MuiDataGrid-columnHeaders': {
-                      backgroundColor: '#f5f5f5',
-                      borderBottom: '2px solid black',
-                    },
-                    '& .MuiDataGrid-columnHeader': {
-                      border: '1px solid black',
-                      fontWeight: 'bold',
-                      fontSize: '14px',
-                    },
-                    '& .MuiDataGrid-cell': {
-                      border: '1px solid black',
-                      fontSize: '14px',
-                      padding: '8px',
-                    },
-                    '& .MuiDataGrid-row': {
-                      borderBottom: '1px solid black',
-                    },
-                  }}
-                >
-                  <DataGrid
-                    rows={selectedTechnicalDetails}
-                    columns={technicalDetailsColumns}
-                    getRowId={(row) => row.id || row.rowIndex}
-                    autoHeight
-                    hideFooter
-                  />
-                </Box>
-              </Box>
-
-            </Box>
-            {/* Additional Notes Section */}
-            <Box mt={4}>
-              <Typography paragraph>
-                QUOTE INCLUDING SPECIAL OPTION "SPECIAL CABLE ENTRIES"SINCE REQUEST IS FOR 1xM25 + 1xM20 WHILE CEMP STANDARD CABLE ENTRY WOULD BE 1xM25 ONLY. CUSTOMER TO ADVISE IF SECOND ENTRY IS REQUIRED FOR AUXILIARIES (NOT REQUIRED SO NOT INCLUDED IN THE QUOTE) IE2 EFFICIENCY CONSIDERED ACCORDING TO ECODESIGN - ATEX CERTIFICATE REQUIRED BY YOUR RFQ.
-              </Typography>
-
-              <Typography variant="subtitle1"><strong>Note:</strong></Typography>
-              <ul style={{ paddingLeft: '20px', marginTop: 0 }}>
-                <li>18% GST Extra</li>
-                <li>Quoted price is Ex Nava sheva port, price includes sea freight and customs</li>
-                <li>Lead time – 8/10 weeks from the date of manufacturing clearance and after receiving advance + transit time to India (8 Weeks by Sea).</li>
-                <li>Payment: 30% advance, 20% against Manufacturing clearance, 20% against readiness date, and balance against PI once motor reaches India. LD not acceptable.</li>
-                <li>Marathon reserves the right to route the PO through an authorized channel partner during finalization.</li>
-              </ul>
-
-              <Box
+            {/* DataGrid - Technical Summary */}
+            <Box sx={{ width: '100%', overflow: 'auto', mb: 4 }}>
+              <DataGrid
+                rows={selectedTechnicalDetails}
+                columns={technicalDetailsColumns}
+                getRowId={(row) => row.id || row.rowIndex}
+                autoHeight
+                hideFooter
                 sx={{
                   border: '2px solid black',
-                  padding: 2,
-                  marginTop: 3,
-                  fontFamily: 'Arial, sans-serif',
-                  fontSize: '14px',
-                }}
-              >
-                <p><strong>SHIP METHOD:</strong> NA</p>
-                <p><strong>WARRANTY:</strong> 12 MONTHS FROM DATE OF INSTALLATION OR 18 MONTHS FROM DATE OF INVOICE</p>
-                <p><strong>PACKAGING TYPE:</strong> WOODEN BOX SEA WORTHY PACKING</p>
-                <p><strong>VALIDITY OF OFFER:</strong> 15 Days</p>
-              </Box>
-            </Box>
-            {/* Technical Data Table without horizontal scroll */}
-            <Box sx={{ width: '100%', overflow: 'hidden', marginTop: 5 }}>
-              <Box
-                sx={{
-                  '& .MuiDataGrid-root': {
-                    border: '2px solid black',
-                  },
                   '& .MuiDataGrid-columnHeaders': {
                     backgroundColor: '#f5f5f5',
                     borderBottom: '2px solid black',
                   },
-                  '& .MuiDataGrid-columnHeader': {
-                    border: '1px solid black',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                  },
-                  '& .MuiDataGrid-cell': {
+                  '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
                     border: '1px solid black',
                     fontSize: '14px',
                     padding: '8px',
                   },
-                  '& .MuiDataGrid-row': {
-                    borderBottom: '1px solid black',
-                  },
                 }}
-              >
-                <DataGrid
-                  rows={selectedTechnicalDetails}
-                  columns={technicalDetailsColumnsAll}
-                  getRowId={(row) => row.id || row.rowIndex}
-                  autoHeight
-                  hideFooter
-                />
-              </Box>
+              />
             </Box>
 
+
+
+            {/* Full Technical Table */}
+            <Box sx={{ width: '100%', overflow: 'hidden', mt: 3 }}>
+              <DataGrid
+                rows={selectedTechnicalDetails}
+                columns={technicalDetailsColumnsAll}
+                getRowId={(row) => row.id || row.rowIndex}
+                autoHeight
+                hideFooter
+                sx={{
+                  border: '2px solid black',
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: '#f5f5f5',
+                    borderBottom: '2px solid black',
+                  },
+                  '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
+                    border: '1px solid black',
+                    fontSize: '14px',
+                    padding: '8px',
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Notes */}
+            <Box mb={4}>
+              {/* <Typography paragraph> */}
+              {/* QUOTE INCLUDING SPECIAL OPTION "SPECIAL CABLE ENTRIES" ... */}
+              {/* </Typography> */}
+              <Typography variant="subtitle1"><strong>Note:</strong></Typography>
+              <ul>
+                <li>18% GST Extra</li>
+                <li>Quoted price is {formData.totalPackage}</li>
+                <li>Lead time: {formData.stdIncoTerms}</li>
+                <li>Payment: {formData.stdPaymentTerms}</li>
+                <li>Payment: {formData.stdPaymentTerms}</li>
+                <li>Validity: {new Date(formData.offerDueDate).toLocaleDateString()}</li>
+              </ul>
+              {/* <Box */}
+              {/* sx={{ */}
+              {/* border: '2px solid black', */}
+              {/* padding: 2, */}
+              {/* mt: 2, */}
+              {/* fontSize: '14px', */}
+              {/* }} */}
+              {/* > */}
+              {/* <p><strong>SHIP METHOD:</strong> NA</p> */}
+              {/* <p><strong>WARRANTY:</strong> 12 MONTHS...</p> */}
+              {/* </Box> */}
+            </Box>
+
+            {/* Logos */}
             <Box
               sx={{
                 display: 'flex',
-                flexWrap: 'wrap', // or remove if you strictly want one line with overflow
+                flexWrap: 'wrap',
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 gap: 2,
-                overflowX: 'auto', // optional: for scroll if logos overflow
-                padding: 2,
+                mt: 4,
               }}
             >
               {imageList.map((file, index) => (
                 <img
                   key={index}
                   src={`src/assets/${file}`}
-                  alt={file.replace(/\..+$/, '')}
+                  alt={file}
                   style={{
-                    width: 50,           // fixed width
-                    height: 50,          // fixed height
-                    objectFit: 'contain', // maintain aspect ratio
-                    borderRadius: 4,
+                    width: 50,
+                    height: 50,
+                    objectFit: 'contain',
+                    backgroundColor: '#f5f5f5',
                     padding: 4,
-                    backgroundColor: '#f5f5f5', // optional: helps visualize the bounding box
+                    borderRadius: 4,
                   }}
                 />
               ))}
-
             </Box>
 
             {/* Close Button */}
-            <Box mt={2} textAlign="right">
+            <Box mt={3} textAlign="right">
               <Button variant="contained" onClick={handleCloseModal}>
                 Close
               </Button>
@@ -895,7 +863,7 @@ const InquiryGrid = () => {
           </Box>
         </Modal>
 
-        {/* Confirmation Dialog */}
+        {/* Confirm Delete Dialog */}
         <ConfirmDialog
           open={confirmDialogOpen}
           title="Delete Inquiry"

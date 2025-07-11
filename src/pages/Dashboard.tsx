@@ -342,6 +342,40 @@ const Dashboard = () => {
     return null;
   };
 
+  const formatDateExcel = (dateString: string | undefined | null): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+
+  const exportToExcel = () => {
+    const exportData = rows.map((row) => ({
+      'Customer Type': row.customerType,
+      'Customer Name': row.customerName,
+      'Enquiry No': row.enquiryNo,
+      'Enquiry Date': formatDateExcel(row.enquiryDate),
+      'RFQ No': row.rfqNo,
+      'RFQ Date': formatDateExcel(row.rfqDate),
+      'Total Package': row.totalPackage,
+      'Inquiry Status': row.status,
+      'Offer Status': row.offerStatus,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inquiries');
+
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const dataBlob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(dataBlob, `Inquiry_Dashboard_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+
 
 
   return (
@@ -488,6 +522,21 @@ const Dashboard = () => {
         </Card>
         {/* </Box> */}
       </Box>
+      <Card sx={{ mt: '6px' }}>
+        <CardContent>
+          <Box display="flex" justifyContent="flex-end">
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={exportToExcel}
+              startIcon={<FileDownloadIcon />}
+            >
+              Export to Excel
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+
       <Grid container spacing={2}>
 
         {/* Inquiry Status */}
@@ -521,6 +570,7 @@ const Dashboard = () => {
 
 
         {/* Offer Status */}
+
         <Grid size={{ xs: 12, sm: 6 }} >
           <Card sx={{ mt: '6px' }}>
             <CardContent>
@@ -550,7 +600,7 @@ const Dashboard = () => {
 
 
       {/* Charts Section */}
-      <div className="p-6 grid grid-cols-2 gap-6">
+      {/* <div className="p-6 grid grid-cols-2 gap-6">
         <div className="shadow-lg p-4 rounded-xl bg-white">
           <h2 className="text-xl font-bold mb-4">Customer Type ({rows.length} records)</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -576,7 +626,7 @@ const Dashboard = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

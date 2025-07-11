@@ -1,19 +1,35 @@
-import { Box } from '@mui/material';
+import React from 'react';
+import { Box, CssBaseline, Toolbar } from '@mui/material';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
-import React from 'react';
-
-//const drawerWidth = 240;
 
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [open, setOpen] = React.useState(true);
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9f9f9' }}>
+      <CssBaseline /> {/* Normalize styles across browsers */}
+
+      {/* Sidebar */}
       <Sidebar open={open} setOpen={setOpen} />
-      <Box sx={{ flexGrow: 1 }}>
+
+      {/* Main Content Area */}
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Navbar */}
         <Navbar open={open} setOpen={setOpen} />
-        <Box component="main" sx={{ p: 3, pt: 10 }}> {/* 👈 Add pt (padding-top) to push below navbar */}
+
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            p: 3,
+            pt: 10, // Push content below fixed navbar
+            flexGrow: 1,
+            overflowX: 'hidden',
+          }}
+        >
+          {/* Spacer for fixed AppBar height */}
+          <Toolbar sx={{ display: { xs: 'block', sm: 'none' } }} />
           {children}
         </Box>
       </Box>
