@@ -74,6 +74,7 @@ interface InquiryFormData {
     rfqDate: Date;
     stdPaymentTerms: string;
     stdIncoTerms: string;
+    offerValidUpto: string;
     listPrice: number;
     discount: number;
     netPriceWithoutGST: number;
@@ -242,6 +243,7 @@ const InquiryForm = () => {
         rfqDate: new Date(),
         stdPaymentTerms: '',
         stdIncoTerms: '',
+        offerValidUpto: '',
         listPrice: 0,
         discount: 0,
         netPriceWithoutGST: 0,
@@ -287,6 +289,7 @@ const InquiryForm = () => {
         rfqDate: new Date(),
         stdPaymentTerms: '',
         stdIncoTerms: '',
+        offerValidUpto: '',
         listPrice: 0,
         discount: 0,
         netPriceWithoutGST: 0,
@@ -672,10 +675,10 @@ const InquiryForm = () => {
             toast.error('Enter Quantity.');
             return; // Don't add if brand is empty
         }
-        if (!brandInput.techDetailsListPrice) {
-            toast.error('Enter List Price.');
-            return; // Don't add if brand is empty
-        }
+        // if (!brandInput.techDetailsListPrice) {
+        //     toast.error('Enter List Price.');
+        //     return; // Don't add if brand is empty
+        // }
 
         if (editIndex !== null) {
 
@@ -713,57 +716,58 @@ const InquiryForm = () => {
         }
 
         // Reset the brandInput form after adding or updating
-        setBrandInput({
-            id: 0,
-            inquiryId: 0,
-            motorType: "LT",
-            kw: "",
-            kw2: "",
-            hp: "",
-            hp2: "",
-            phase: "Three",
-            pole: "4",
-            frameSize: "",
-            dop: "IP55",
-            insulationClass: "F",
-            efficiency: "IE2",
-            voltage: "415",
-            frequency: "50",
-            quantity: "",
-            mounting: "B3",
-            safeAreaHazardousArea: "Safe Area",
-            brand: "",
-            ifHazardousArea: "",
-            tempClass: "T3",
-            gasGroup: "IIA IIB",
-            zone: "I",
-            hardadousDescription: "",
-            duty: "S1",
-            startsPerHour: "",
-            cdf: "",
-            ambientTemp: "50",
-            tempRise: "Limited to Class F",
-            accessories: [],
-            nonStandardFeatures: "",
-            brake: "No",
-            encoderMounting: "No",
-            encoderMountingIfYes: "",
-            application: "",
-            segment: "",
-            narration: "",
-            amount: "",
-            deliveryTime: '',
-            startType: "DOL",
-            techDetailsDiscount: '',
-            techDetailsListPrice: '',
-            isAmountManuallyEdited: false,
+        // setBrandInput({
+        //     id: 0,
+        //     inquiryId: 0,
+        //     motorType: "LT",
+        //     kw: "",
+        //     kw2: "",
+        //     hp: "",
+        //     hp2: "",
+        //     phase: "Three",
+        //     pole: "4",
+        //     frameSize: "",
+        //     dop: "IP55",
+        //     insulationClass: "F",
+        //     efficiency: "IE2",
+        //     voltage: "415",
+        //     frequency: "50",
+        //     quantity: "",
+        //     mounting: "B3",
+        //     safeAreaHazardousArea: "Safe Area",
+        //     brand: "",
+        //     ifHazardousArea: "",
+        //     tempClass: "T3",
+        //     gasGroup: "IIA IIB",
+        //     zone: "I",
+        //     hardadousDescription: "",
+        //     duty: "S1",
+        //     startsPerHour: "",
+        //     cdf: "",
+        //     ambientTemp: "50",
+        //     tempRise: "Limited to Class F",
+        //     accessories: [],
+        //     nonStandardFeatures: "",
+        //     brake: "No",
+        //     encoderMounting: "No",
+        //     encoderMountingIfYes: "",
+        //     application: "",
+        //     segment: "",
+        //     narration: "",
+        //     amount: "",
+        //     deliveryTime: '',
+        //     startType: "DOL",
+        //     techDetailsDiscount: '',
+        //     techDetailsListPrice: '',
+        //     isAmountManuallyEdited: false,
 
 
-        });
+        // });
         setOpenModal(false);
     };
 
     const handleOpenModal = () => {
+        brandInput.id = 0; // Reset ID for new entry
         setMotorMappingData({
             id: 0,
             inquiryId: 0,
@@ -1992,6 +1996,16 @@ const InquiryForm = () => {
                             />
                         </Grid>
 
+                        <Grid size={{ xs: 12, sm: 3 }} >
+                            <TextField
+                                fullWidth
+                                label="Offer Valid Upto"
+                                name="offerValidUpto"
+                                value={formData.offerValidUpto}
+                                onChange={handleChange}
+                            />
+                        </Grid>
+
                     </Grid>
 
                 </CardContent>
@@ -2920,38 +2934,38 @@ const InquiryForm = () => {
                                 />
                             </Grid>
 
-                               {formData.isListPrice == true && (
-                            <>
+                            {formData.isListPrice == true && (
+                                <>
 
-                            <Grid size={{ xs: 12, sm: 2 }}>
-                                <TextField
-                                    fullWidth
-                                    label="List Price"
-                                    name="techDetailsListPrice"
-                                    value={brandInput.techDetailsListPrice}
-                                    onChange={handleBrandChange}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                {formData.selectedCurrency === 'INR' ? '₹' : '$'}
-                                            </InputAdornment>
-                                        ),
-                                        inputMode: 'numeric'
-                                    }}
-                                />
-                            </Grid>
+                                    <Grid size={{ xs: 12, sm: 2 }}>
+                                        <TextField
+                                            fullWidth
+                                            label="List Price"
+                                            name="techDetailsListPrice"
+                                            value={brandInput.techDetailsListPrice}
+                                            onChange={handleBrandChange}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        {formData.selectedCurrency === 'INR' ? '₹' : '$'}
+                                                    </InputAdornment>
+                                                ),
+                                                inputMode: 'numeric'
+                                            }}
+                                        />
+                                    </Grid>
 
-                            <Grid size={{ xs: 12, sm: 4 }} >
-                                <TextField
-                                    fullWidth
-                                    label="Discount"
-                                    name="techDetailsDiscount"
-                                    // type="number"
-                                    value={brandInput.techDetailsDiscount}
-                                    onChange={handleBrandChange}
-                                />
-                            </Grid>
-                            </>
+                                    <Grid size={{ xs: 12, sm: 4 }} >
+                                        <TextField
+                                            fullWidth
+                                            label="Discount"
+                                            name="techDetailsDiscount"
+                                            // type="number"
+                                            value={brandInput.techDetailsDiscount}
+                                            onChange={handleBrandChange}
+                                        />
+                                    </Grid>
+                                </>
                             )}
 
                             <Grid size={{ xs: 12, sm: 4 }} >

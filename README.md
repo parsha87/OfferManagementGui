@@ -52,3 +52,15 @@ export default tseslint.config({
   },
 })
 ```
+
+
+
+host on linux 
+port = 90
+cd /var/www/react-app
+serve -s . -l 90
+
+for save
+pm2 start "serve -s . -l 90" --name offer-ui
+
+

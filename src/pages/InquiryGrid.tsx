@@ -114,6 +114,11 @@ const InquiryGrid = () => {
   const regionOptions = ['North', 'South', 'East', 'West'];
   const [customerNameOptions, setCustomerNameOptions] = useState<string[]>([]); // Use useState to store the options
   const [customerTypeOptions, setCustomerTypeOptions] = useState<string[]>([]); // Use useState to store the options
+  const [paginationModel, setPaginationModel] = useState({
+    pageSize: 10,
+    page: 0,
+  });
+
 
   // const printRef = useRef<HTMLDivElement>(null);
 
@@ -508,48 +513,54 @@ const InquiryGrid = () => {
   ];
 
   const getCurrencyByInquiryId = (id: number, data: any[]): string => {
-  const record = data.find((row) => row.inquiryId === id);
-  return record?.selectedCurrency || 'INR'; // default to INR if not found
-};
+    const record = data.find((row) => row.inquiryId === id);
+    return record?.selectedCurrency || 'INR'; // default to INR if not found
+  };
 
+  const groupByBrand = (data: any[]): Record<string, any[]> => {
+    return data.reduce((groups, item) => {
+      const brand = item.brand || 'Unknown';
+      if (!groups[brand]) {
+        groups[brand] = [];
+      }
+      groups[brand].push(item);
+      return groups;
+    }, {} as Record<string, any[]>);
+  };
 
-  const technicalDetailsColumns: GridColDef[] = [
-    // { field: 'motorType', headerName: 'Motor Type', width: 130 },
-    // { field: 'kw', headerName: 'KW', width: 80 },
-    // { field: 'hp', headerName: 'HP', width: 80 },
-    // { field: 'phase', headerName: 'Phase', width: 100 },
-    // { field: 'pole', headerName: 'Pole', width: 80 },
-    // { field: 'frameSize', headerName: 'Frame Size', width: 100 },
-    // { field: 'dop', headerName: 'DOP', width: 100 },
-    // { field: 'insulationClass', headerName: 'Insulation Class', width: 150 },
-    // { field: 'efficiency', headerName: 'Efficiency', width: 120 },
-    // { field: 'voltage', headerName: 'Voltage', width: 100 },
-    // { field: 'frequency', headerName: 'Frequency', width: 100 },
-    // { field: 'mounting', headerName: 'Mounting', width: 100 },
-    // { field: 'safeAreaHazardousArea', headerName: 'Safe Area/Hazardous', width: 180 },
-    // { field: 'brand', headerName: 'Brand', width: 100 },
-    // { field: 'application', headerName: 'Application', width: 150 },
-    // { field: 'segment', headerName: 'Segment', width: 120 },
-    { field: "rowIndex", headerName: "Sr.No.", width: 130 },
-    { field: 'narration', headerName: 'Product Description', width: 300 },
-    { field: 'deliveryTime', headerName: 'Delivery Time', width: 300 },
-    { field: 'quantity', headerName: 'Quantity', width: 160 },
-    { field: 'amount', headerName: 'Unit Price (INR) ', width: 160 },
-    { field: "totalAmount", headerName: "Total Amount (INR)", width: 160 }
-  ];
 
   const technicalDetailsColumnsAll: GridColDef[] = [
-    { field: "rowIndex", headerName: "Sr.No.", width: 100 },
-    { field: 'motorType', headerName: 'Motor Type', width: 130 },
-    { field: 'kw', headerName: 'KW', width: 80 },
-    { field: 'hp', headerName: 'HP', width: 80 },
-    { field: 'phase', headerName: 'Phase', width: 100 },
-    { field: 'pole', headerName: 'Pole', width: 100 },
+    { field: 'motorType', headerName: 'Motor Type', width: 100 },
+    { field: 'kw', headerName: 'KW', width: 100 },
+    { field: 'pole', headerName: 'pole', width: 100 },
     { field: 'frameSize', headerName: 'Frame Size', width: 100 },
-    { field: 'dop', headerName: 'DOP', width: 100 },
-    { field: 'insulationClass', headerName: 'Insulation Class', width: 150 },
-    { field: 'quantity', headerName: 'Quantity', width: 170 },
-    { field: 'brand', headerName: 'Brand', width: 100 },
+    { field: 'efficiency', headerName: 'Efficiency', width: 100 },
+    { field: 'voltage', headerName: 'Voltage', width: 100 },
+    { field: 'frequency', headerName: 'Frequency', width: 100 },
+    { field: 'narration', headerName: 'Product', width: 100 },
+    {
+      field: 'amount',
+      headerName: 'Unit Price',
+      width: 150,
+      valueFormatter: (params: any) =>
+        new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          minimumFractionDigits: 2,
+        }).format(Number(params) || 0),
+    },
+    { field: 'quantity', headerName: 'Quantity', width: 100 },
+    {
+      field: 'totalAmount',
+      headerName: 'Total',
+      width: 150,
+      valueFormatter: (params: any) =>
+        new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          minimumFractionDigits: 2,
+        }).format(Number(params) || 0),
+    }
   ];
 
   return (
@@ -574,103 +585,104 @@ const InquiryGrid = () => {
         </Box>
       )}
 
-      <Box mt={3} px={3}>
-        {/* Top Action Bar */}
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          alignItems="center"
-          justifyContent="space-between"
-          gap={2}
-          mb={2}
-        >
-          <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}>
-            Add Inquiry
+      {/* <Box mt={3} px={3}> */}
+      {/* Top Action Bar */}
+      <Box
+        display="flex"
+        flexDirection={{ xs: 'column', sm: 'row' }}
+        flexWrap="wrap"
+        alignItems="flex-start"
+        justifyContent="space-start"
+        gap={2}
+        mb={2}
+      >
+        <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}>
+          Add Inquiry
+        </Button>
+
+        <Box display="flex" gap={2} flexWrap="wrap">
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel shrink>Customer Type</InputLabel>
+            <Select
+              label="Customer Type"
+              value={customerTypeFilter}
+              onChange={customerTypeChange}
+              displayEmpty
+              renderValue={(selected) => (selected === '' ? 'All' : selected)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {customerTypeOptions.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel shrink>Region</InputLabel>
+            <Select
+              label="Region"
+              value={regionFilter}
+              onChange={handleRegionChange}
+              displayEmpty
+              renderValue={(selected) => (selected === '' ? 'All' : selected)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {regionOptions.map((region) => (
+                <MenuItem key={region} value={region}>
+                  {region}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel shrink>Customer Name</InputLabel>
+            <Select
+              label="Customer Name"
+              value={customerNameFilter}
+              onChange={customerNameChange}
+              displayEmpty
+              renderValue={(selected) => (selected === '' ? 'All' : selected)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {customerNameOptions.map((name) => (
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel shrink>Status</InputLabel>
+            <Select
+              label="Status"
+              value={statusFilter}
+              onChange={handleStatusChange}
+              displayEmpty
+              renderValue={(selected) => (selected === '' ? 'All' : selected)}
+            >
+              <MenuItem value="">All</MenuItem>
+              {statusOptions.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button variant="outlined" color="secondary" onClick={resetFilters}>
+            Reset Filters
           </Button>
-
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel shrink>Customer Type</InputLabel>
-              <Select
-                label="Customer Type"
-                value={customerTypeFilter}
-                onChange={customerTypeChange}
-                displayEmpty
-                renderValue={(selected) => (selected === '' ? 'All' : selected)}
-              >
-                <MenuItem value="">All</MenuItem>
-                {customerTypeOptions.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel shrink>Region</InputLabel>
-              <Select
-                label="Region"
-                value={regionFilter}
-                onChange={handleRegionChange}
-                displayEmpty
-                renderValue={(selected) => (selected === '' ? 'All' : selected)}
-              >
-                <MenuItem value="">All</MenuItem>
-                {regionOptions.map((region) => (
-                  <MenuItem key={region} value={region}>
-                    {region}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel shrink>Customer Name</InputLabel>
-              <Select
-                label="Customer Name"
-                value={customerNameFilter}
-                onChange={customerNameChange}
-                displayEmpty
-                renderValue={(selected) => (selected === '' ? 'All' : selected)}
-              >
-                <MenuItem value="">All</MenuItem>
-                {customerNameOptions.map((name) => (
-                  <MenuItem key={name} value={name}>
-                    {name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel shrink>Status</InputLabel>
-              <Select
-                label="Status"
-                value={statusFilter}
-                onChange={handleStatusChange}
-                displayEmpty
-                renderValue={(selected) => (selected === '' ? 'All' : selected)}
-              >
-                <MenuItem value="">All</MenuItem>
-                {statusOptions.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Button variant="outlined" color="secondary" onClick={resetFilters}>
-              Reset Filters
-            </Button>
-          </Box>
         </Box>
+        {/* </Box> */}
 
         {/* Data Table */}
         <Box sx={{ width: '100%', overflowX: 'auto' }}>
           <Box sx={{ minWidth: 1200 }}>
-            <DataGrid
+            {/* <DataGrid
               rows={rows}
               columns={inquiryColumns}
               getRowId={(row) => row.inquiryId}
@@ -687,9 +699,33 @@ const InquiryGrid = () => {
                   backgroundColor: '#f5f5f5',
                 },
               }}
+            /> */}
+
+
+            <DataGrid
+              rows={rows}
+              columns={inquiryColumns}
+              getRowId={(row) => row.inquiryId}
+              paginationModel={paginationModel}
+              onPaginationModelChange={(model) => setPaginationModel(model)}
+              pageSizeOptions={[10, 20, 50]}
+              loading={loading}
+              autoHeight
+              disableRowSelectionOnClick
+              sx={{
+                '& .MuiDataGrid-cell': {
+                  whiteSpace: 'nowrap',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: '#f5f5f5',
+                },
+              }}
             />
+
           </Box>
         </Box>
+
+
 
 
         {/* Modal for Technical Details */}
@@ -732,8 +768,41 @@ const InquiryGrid = () => {
                 Download PDF
               </Button>
             </Box>
+            <Box mb={3} sx={{ fontFamily: 'Arial', fontSize: '14px' }}>
 
-            <Box mb={2}>
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start"></Box>
+              {/* Ref and Date */}
+              <Box textAlign="left" mb={2}>
+                <Typography variant="body2" fontWeight="bold">
+                  Ref No: {formData.enquiryNo || 'N/A'}
+                </Typography>
+                <Typography variant="body2" fontWeight="bold" mt={1}>
+                  Date: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </Typography>
+              </Box>
+
+              {/* Address Section */}
+              <Box mt={3}>
+                <Typography><strong>To,</strong></Typography>
+                <Typography>{formData.customerName}</Typography>
+                <Typography>{formData.custAddress}</Typography>
+
+                <Box mt={2}>
+                  <Typography><strong>Kind Attn:</strong> {`${formData.salutation} ${formData.cpfirstName} ${formData.cplastName}`}</Typography>
+                  <Typography><strong>RFQ No:</strong> {formData.customerRfqno || 'N/A'}</Typography>
+                </Box>
+
+                <Box mt={2}>
+                  <Typography>Dear Sir,</Typography>
+                  <Typography>
+                    We are pleased to offer the following against your enquiry dated{' '}
+                    <strong>{new Date(formData.enquiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>:
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* <Box mb={2}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr>
@@ -750,10 +819,10 @@ const InquiryGrid = () => {
                   </tr>
                 </tbody>
               </table>
-            </Box>
+            </Box> */}
 
             {/* DataGrid - Technical Summary */}
-            <Box sx={{ width: '100%', overflow: 'auto', mb: 4 }}>
+            {/* <Box sx={{ width: '100%', overflow: 'auto', mb: 4 }}>
               <DataGrid
                 rows={selectedTechnicalDetails}
                 columns={technicalDetailsColumns}
@@ -773,32 +842,48 @@ const InquiryGrid = () => {
                   },
                 }}
               />
-            </Box>
+            </Box> */}
 
-
-
-            {/* Full Technical Table */}
+            {/* Full Technical Table - Grouped by Brand */}
             <Box sx={{ width: '100%', overflow: 'hidden', mt: 3 }}>
-              <DataGrid
-                rows={selectedTechnicalDetails}
-                columns={technicalDetailsColumnsAll}
-                getRowId={(row) => row.id || row.rowIndex}
-                autoHeight
-                hideFooter
-                sx={{
-                  border: '2px solid black',
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f5f5f5',
-                    borderBottom: '2px solid black',
-                  },
-                  '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
-                    border: '1px solid black',
-                    fontSize: '14px',
-                    padding: '8px',
-                  },
-                }}
-              />
+              {Object.entries(groupByBrand(selectedTechnicalDetails)).map(([brand, rows]) => (
+                <Box key={brand} mb={4}>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold', color: '#1a1a1a' }}>
+                    Brand: {brand}
+                  </Typography>
+                  <DataGrid
+                    rows={rows}
+                    columns={technicalDetailsColumnsAll}
+                    getRowId={(row) => row.id || row.rowIndex}
+                    autoHeight
+                    hideFooter
+                    sx={{
+                      border: '2px solid black',
+                      '& .MuiDataGrid-columnHeaders': {
+                        backgroundColor: '#f5f5f5',
+                        borderBottom: '2px solid black',
+                      },
+                      '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
+                        border: '1px solid black',
+                        fontSize: '14px',
+                        padding: '8px',
+                      },
+                    }}
+                  />
+                  <Box textAlign="right" mt={1}>
+                    <Typography variant="body2" fontWeight="bold">
+                      Brand Total: ₹
+                      {rows
+                        .reduce((sum, row) => sum + ((Number(row.amount) || 0) * (Number(row.quantity) || 0)), 0)
+                        .toFixed(2)}
+                    </Typography>
+                  </Box>
+
+                </Box>
+              ))}
             </Box>
+
+
 
             {/* Notes */}
             <Box mb={4}>
@@ -808,10 +893,8 @@ const InquiryGrid = () => {
               <Typography variant="subtitle1"><strong>Note:</strong></Typography>
               <ul>
                 <li>18% GST Extra</li>
-                <li>Quoted price is {formData.totalPackage}</li>
-                <li>Lead time: {formData.stdIncoTerms}</li>
-                <li>Payment: {formData.stdPaymentTerms}</li>
-                <li>Payment: {formData.stdPaymentTerms}</li>
+                <li>INCOTerms: {formData.stdIncoTerms}</li>
+                <li>Payment Terms: {formData.stdPaymentTerms}</li>
                 <li>Validity: {new Date(formData.offerDueDate).toLocaleDateString()}</li>
               </ul>
               {/* <Box */}
