@@ -57,7 +57,8 @@ api.interceptors.response.use(
             window.location.href = '/';
         } else if (error.response.status === 500) {
             console.warn('Server error (500). Redirecting to login.');
-            window.location.href = '/';
+            //window.location.href = '/';
+             alert('Server error (500)');
         } else {
             alert(`Error: ${error.response.status} - ${error.response.statusText}`);
         }
