@@ -1,15 +1,18 @@
 import axios from 'axios';
-import config from '../config'; // Make sure this exports `apiUrl`
+import config from '../config'; // Must export `apiUrl`
+import { toast } from 'react-toastify';
 
 let setLoader: (loading: boolean) => void = () => { };
 
-// Allow LoaderContext to inject the state setter
+// Allow React components (like context providers) to register a loader setter
 export const setLoaderHandler = (setter: (loading: boolean) => void) => {
-    console.log("Loader handler set");
+    console.log('Loader handler registered');
     setLoader = setter;
-}
+};
 
-// Create an Axios instance
+const LOGIN_PATH = '/'; // Change to '/login' if needed
+
+// Create Axios instance
 const api = axios.create({
     baseURL: config.apiUrl,
     headers: {
@@ -21,13 +24,13 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         const token = sessionStorage.getItem('token');
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-        } else {
-            console.warn('No token found. Redirecting to login.');
-            window.location.href = '/';
+
+        if (!token) {
+            console.warn('No token found in sessionStorage');
+            return Promise.reject({ message: 'No token provided' });
         }
 
+        config.headers['Authorization'] = `Bearer ${token}`;
         config.headers['Cache-Control'] = 'no-cache';
 
         // Show loader
@@ -49,18 +52,28 @@ api.interceptors.response.use(
     },
     (error) => {
         setLoader(false);
+
         if (!error.response) {
             alert('Network error: Please check your internet connection.');
-        } else if (error.response.status === 401) {
-            console.warn('Unauthorized (401). Redirecting to login.');
-            sessionStorage.removeItem('token');
-            window.location.href = '/';
-        } else if (error.response.status === 500) {
-            console.warn('Server error (500). Redirecting to login.');
-            //window.location.href = '/';
-             alert('Server error (500)');
         } else {
-            alert(`Error: ${error.response.status} - ${error.response.statusText}`);
+            const { status, data } = error.response;
+
+            switch (status) {
+                case 401:
+                    console.warn('Unauthorized (401). Redirecting to login.');
+                    sessionStorage.removeItem('token');
+                    window.location.href = "/";
+                    break;
+
+                case 500:
+                    console.error('Server error (500):', data);
+                    alert('Internal Server Error. Please try again later.');
+                    break;
+
+                default:
+                    toast.error(`Error ${status}: ${data?.message || error.message}`);
+                    break;
+            }
         }
 
         return Promise.reject(error);

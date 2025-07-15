@@ -5,6 +5,8 @@ import api from '../context/AxiosContext'; // Axios instance
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import config from '../config';
+import { toast } from 'react-toastify';
+
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -54,6 +56,7 @@ const Login = () => {
         email: username,
         password,
       });
+
       const { token, name, role } = response.data;
 
       // Save token to sessionStorage
@@ -61,16 +64,23 @@ const Login = () => {
       sessionStorage.setItem('role', role);
 
       // Set user in context
-      login(name); // or username, based on your API response
+      login(name);
+
+      toast.success(`Welcome ${name}!`, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
 
       // Navigate to dashboard
       navigate('/dashboard');
+
     } catch (err: any) {
-      if (err.response?.status === 401) {
-        setError(err.response.data.message || "Invalid credentials. Please try again.");
-      }
-      else {
-        setError('Invalid credentials. Please try again.');
+      if (err.response?.status === 500) {
+        toast.error(err.response.data.message || 'Invalid credentials. Please try again.');
+        setError(err.response.data.message || 'Invalid credentials. Please try again.');
+      } else {
+        toast.error('Something went wrong. Please try again later.');
+        setError('Something went wrong. Please try again.');
       }
     }
   };

@@ -866,9 +866,9 @@ const InquiryForm = () => {
 
         // Contact Info
         if (!formData.custPhoneNo) return toastError('Customer Phone No is required');
-        if (!/^\+?\d{7,15}$/.test(formData.custPhoneNo)) {
-            return toastError('Enter a valid phone number (7 to 15 digits, optionally starting with +)');
-        }
+        // if (!/^\+?\d{7,30}$/.test(formData.custPhoneNo)) {
+            // return toastError('Enter a valid phone number (7 to 15 digits, optionally starting with +)');
+        // }
         if (!formData.custEmail) return toastError('Customer Email is required');
         if (!/\S+@\S+\.\S+/.test(formData.custEmail)) return toastError('Email is invalid');
 

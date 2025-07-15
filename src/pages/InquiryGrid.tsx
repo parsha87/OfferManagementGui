@@ -61,6 +61,7 @@ interface InquiryFormData {
   customerRfqdate: Date;
   offerDueDate: Date;
   technicaldetailsmappings: MotorMapping[];
+  selectedCurrency: any,
 }
 
 
@@ -173,6 +174,7 @@ const InquiryGrid = () => {
     customerRfqdate: new Date(),
     offerDueDate: new Date(),
     technicaldetailsmappings: [],
+    selectedCurrency: "INR",
   });
 
 
@@ -211,6 +213,7 @@ const InquiryGrid = () => {
     lostReason: '',
     customerRfqdate: new Date(),
     offerDueDate: new Date(),
+    selectedCurrency: "INR",
     technicaldetailsmappings: [],
   });
 
@@ -403,6 +406,7 @@ const InquiryGrid = () => {
       headerName: 'Actions',
       width: 150,
       sortable: false,
+      align: 'center',
       renderCell: (params: GridRenderCellParams<any>) => (
         <Stack direction="row" spacing={1}>
           <IconButton
@@ -446,13 +450,14 @@ const InquiryGrid = () => {
       ),
     },
     // { field: 'inquiryId', headerName: 'Inquiry ID', width: 120 },
-    { field: 'customerType', headerName: 'Customer Type', width: 130 },
-    { field: 'customerName', headerName: 'Customer Name', width: 150 },
-    { field: 'enquiryNo', headerName: 'Enquiry No', width: 150 },
+    { field: 'customerType', headerName: 'Customer Type',align: 'center', width: 130 },
+    { field: 'customerName', headerName: 'Customer Name',align: 'center', width: 150 },
+    { field: 'enquiryNo', headerName: 'Enquiry No',align: 'center', width: 150 },
     {
       field: 'enquiryDate',
       headerName: 'Enquiry Date',
       width: 150,
+      align: 'center',
       valueFormatter: (params) => {
         const date = new Date(params);
         const day = String(date.getDate()).padStart(2, '0');
@@ -461,11 +466,12 @@ const InquiryGrid = () => {
         return `${day}/${month}/${year}`;
       },
     },
-    { field: 'rfqNo', headerName: 'RFQ No', width: 150 },
+    { field: 'rfqNo', headerName: 'RFQ No',align: 'center', width: 150 },
     {
       field: 'rfqDate',
       headerName: 'RFQ Date',
       width: 150,
+      align: 'center',
       valueFormatter: (params) => {
         const date = new Date(params);
         if (isNaN(date.getTime())) return ''; // handle invalid date
@@ -495,6 +501,7 @@ const InquiryGrid = () => {
       field: 'totalPackage',
       headerName: 'Total Package',
       width: 150,
+      align: 'right',
       valueFormatter: (params: GridRenderCellParams<any>) => {
         const value = Number(params); // ✅ FIXED: get actual value
         const currency = params.row?.selectedCurrency || 'INR'; // use optional chaining just in case
@@ -508,8 +515,8 @@ const InquiryGrid = () => {
           });
       },
     },
-    { field: 'status', headerName: 'Status', width: 120 },
-    { field: 'offerStatus', headerName: 'Offer Status', width: 120 }
+    { field: 'status', headerName: 'Status',align: 'center', width: 120 },
+    { field: 'offerStatus', headerName: 'Offer Status',align: 'center', width: 120 }
   ];
 
   const getCurrencyByInquiryId = (id: number, data: any[]): string => {
@@ -530,38 +537,43 @@ const InquiryGrid = () => {
 
 
   const technicalDetailsColumnsAll: GridColDef[] = [
-    { field: 'motorType', headerName: 'Motor Type', width: 100 },
-    { field: 'kw', headerName: 'KW', width: 100 },
-    { field: 'pole', headerName: 'pole', width: 100 },
-    { field: 'frameSize', headerName: 'Frame Size', width: 100 },
-    { field: 'efficiency', headerName: 'Efficiency', width: 100 },
-    { field: 'voltage', headerName: 'Voltage', width: 100 },
-    { field: 'frequency', headerName: 'Frequency', width: 100 },
-    { field: 'narration', headerName: 'Product', width: 100 },
+    { field: 'motorType', headerName: 'Motor Type', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'kw', headerName: 'KW', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'pole', headerName: 'Pole', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'frameSize', headerName: 'Frame Size', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'efficiency', headerName: 'Efficiency', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'voltage', headerName: 'Voltage', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'frequency', headerName: 'Frequency', width: 100, align: 'center', headerAlign: 'center' },
+    { field: 'narration', headerName: 'Product', width: 100, align: 'center', headerAlign: 'center' },
     {
       field: 'amount',
       headerName: 'Unit Price',
       width: 150,
+      align: 'right',
+      headerAlign: 'right',
       valueFormatter: (params: any) =>
         new Intl.NumberFormat('en-IN', {
           style: 'currency',
-          currency: 'INR',
+          currency: formData.selectedCurrency || 'INR',
           minimumFractionDigits: 2,
-        }).format(Number(params) || 0),
+        }).format(Number(params?.value) || 0),
     },
-    { field: 'quantity', headerName: 'Quantity', width: 100 },
+    { field: 'quantity', headerName: 'Quantity', width: 100, align: 'center', headerAlign: 'center' },
     {
       field: 'totalAmount',
       headerName: 'Total',
       width: 150,
+      align: 'right',
+      headerAlign: 'right',
       valueFormatter: (params: any) =>
         new Intl.NumberFormat('en-IN', {
           style: 'currency',
-          currency: 'INR',
+          currency: formData.selectedCurrency || 'INR',
           minimumFractionDigits: 2,
-        }).format(Number(params) || 0),
+        }).format(Number(params?.value) || 0),
     }
   ];
+
 
   return (
     <>
@@ -872,10 +884,17 @@ const InquiryGrid = () => {
                   />
                   <Box textAlign="right" mt={1}>
                     <Typography variant="body2" fontWeight="bold">
-                      Brand Total: ₹
-                      {rows
-                        .reduce((sum, row) => sum + ((Number(row.amount) || 0) * (Number(row.quantity) || 0)), 0)
-                        .toFixed(2)}
+                      Brand Total:{" "}
+                      {
+                        new Intl.NumberFormat('en-IN', {
+                          style: 'currency',
+                          currency: formData.selectedCurrency || 'INR'
+                        }).format(
+                          rows.reduce((sum, row) =>
+                            sum + ((Number(row.amount) || 0) * (Number(row.quantity) || 0)), 0
+                          )
+                        )
+                      }
                     </Typography>
                   </Box>
 
@@ -892,7 +911,12 @@ const InquiryGrid = () => {
               {/* </Typography> */}
               <Typography variant="subtitle1"><strong>Note:</strong></Typography>
               <ul>
-                <li>18% GST Extra</li>
+                {formData.customerType == 'Export' && (
+                  <li>Taxes : Nill</li>
+                )}
+                {formData.customerType !== 'Export' && (
+                  <li>Taxes : 18% GST Extra</li>
+                )}
                 <li>INCOTerms: {formData.stdIncoTerms}</li>
                 <li>Payment Terms: {formData.stdPaymentTerms}</li>
                 <li>Validity: {new Date(formData.offerDueDate).toLocaleDateString()}</li>
