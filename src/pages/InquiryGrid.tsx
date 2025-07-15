@@ -450,9 +450,9 @@ const InquiryGrid = () => {
       ),
     },
     // { field: 'inquiryId', headerName: 'Inquiry ID', width: 120 },
-    { field: 'customerType', headerName: 'Customer Type',align: 'center', width: 130 },
-    { field: 'customerName', headerName: 'Customer Name',align: 'center', width: 150 },
-    { field: 'enquiryNo', headerName: 'Enquiry No',align: 'center', width: 150 },
+    { field: 'customerType', headerName: 'Customer Type', align: 'center', width: 130 },
+    { field: 'customerName', headerName: 'Customer Name', align: 'center', width: 150 },
+    { field: 'enquiryNo', headerName: 'Enquiry No', align: 'center', width: 150 },
     {
       field: 'enquiryDate',
       headerName: 'Enquiry Date',
@@ -466,7 +466,7 @@ const InquiryGrid = () => {
         return `${day}/${month}/${year}`;
       },
     },
-    { field: 'rfqNo', headerName: 'RFQ No',align: 'center', width: 150 },
+    { field: 'rfqNo', headerName: 'RFQ No', align: 'center', width: 150 },
     {
       field: 'rfqDate',
       headerName: 'RFQ Date',
@@ -515,8 +515,8 @@ const InquiryGrid = () => {
           });
       },
     },
-    { field: 'status', headerName: 'Status',align: 'center', width: 120 },
-    { field: 'offerStatus', headerName: 'Offer Status',align: 'center', width: 120 }
+    { field: 'status', headerName: 'Status', align: 'center', width: 120 },
+    { field: 'offerStatus', headerName: 'Offer Status', align: 'center', width: 120 }
   ];
 
   const getCurrencyByInquiryId = (id: number, data: any[]): string => {
@@ -789,7 +789,7 @@ const InquiryGrid = () => {
                   Ref No: {formData.enquiryNo || 'N/A'}
                 </Typography>
                 <Typography variant="body2" fontWeight="bold" mt={1}>
-                  Date: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  Date: <strong>{new Date(formData.customerRfqdate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
                 </Typography>
               </Box>
 
@@ -808,7 +808,7 @@ const InquiryGrid = () => {
                   <Typography>Dear Sir,</Typography>
                   <Typography>
                     We are pleased to offer the following against your enquiry dated{' '}
-                    <strong>{new Date(formData.enquiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>:
+                    <strong>{new Date(formData.customerRfqdate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>:
                   </Typography>
                 </Box>
               </Box>
@@ -917,7 +917,7 @@ const InquiryGrid = () => {
                 {formData.customerType !== 'Export' && (
                   <li>Taxes : 18% GST Extra</li>
                 )}
-                <li>INCOTerms: {formData.stdIncoTerms}</li>
+                <li>INCO Terms: {formData.stdIncoTerms}</li>
                 <li>Payment Terms: {formData.stdPaymentTerms}</li>
                 <li>Validity: {new Date(formData.offerDueDate).toLocaleDateString()}</li>
               </ul>
