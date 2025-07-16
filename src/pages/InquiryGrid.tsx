@@ -540,7 +540,23 @@ const InquiryGrid = () => {
     { field: 'motorType', headerName: 'Motor Type', width: 100, align: 'center', headerAlign: 'center' },
     { field: 'kw', headerName: 'KW', width: 100, align: 'center', headerAlign: 'center' },
     { field: 'pole', headerName: 'Pole', width: 100, align: 'center', headerAlign: 'center' },
-    { field: 'frameSize', headerName: 'Frame Size', width: 100, align: 'center', headerAlign: 'center' },
+    {
+      field: 'frameSize',
+      headerName: 'Frame Size',
+      width: 150,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params: any) => {
+        const prefix = params.row?.prefix?.trim() || '';
+        const frameSize = params.row?.frameSize?.trim() || '';
+        const suffix = params.row?.suffix?.trim() || '';
+
+        // Only show if frameSize has value
+        return frameSize
+          ? `${prefix}${frameSize}${suffix}`
+          : '';
+      },
+    },
     { field: 'efficiency', headerName: 'Efficiency', width: 100, align: 'center', headerAlign: 'center' },
     { field: 'voltage', headerName: 'Voltage', width: 100, align: 'center', headerAlign: 'center' },
     { field: 'frequency', headerName: 'Frequency', width: 100, align: 'center', headerAlign: 'center' },

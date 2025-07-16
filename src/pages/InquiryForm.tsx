@@ -51,6 +51,8 @@ export interface MotorMapping {
     techDetailsListPrice: string;
     techDetailsDiscount: string;
     isAmountManuallyEdited: boolean;
+    prefix: string;
+    suffix: string;
 
 }
 
@@ -220,6 +222,8 @@ const InquiryForm = () => {
         techDetailsDiscount: '',
         techDetailsListPrice: '',
         isAmountManuallyEdited: false,
+        prefix: '',
+        suffix: ''
 
     });
 
@@ -812,6 +816,8 @@ const InquiryForm = () => {
             techDetailsDiscount: '',
             techDetailsListPrice: '',
             isAmountManuallyEdited: false,
+            prefix: '',
+            suffix: ''
 
         });
         setOpenModal(true);
@@ -867,7 +873,7 @@ const InquiryForm = () => {
         // Contact Info
         if (!formData.custPhoneNo) return toastError('Customer Phone No is required');
         // if (!/^\+?\d{7,30}$/.test(formData.custPhoneNo)) {
-            // return toastError('Enter a valid phone number (7 to 15 digits, optionally starting with +)');
+        // return toastError('Enter a valid phone number (7 to 15 digits, optionally starting with +)');
         // }
         if (!formData.custEmail) return toastError('Customer Email is required');
         if (!/\S+@\S+\.\S+/.test(formData.custEmail)) return toastError('Email is invalid');
@@ -1803,7 +1809,7 @@ const InquiryForm = () => {
                                                         <TableCell>{brand.hp}</TableCell>
                                                         <TableCell>{brand.phase}</TableCell>
                                                         <TableCell>{brand.pole}</TableCell>
-                                                        <TableCell>{brand.frameSize}</TableCell>
+                                                        <TableCell>{brand.prefix}{brand.frameSize}{brand.suffix}</TableCell>
                                                         <TableCell>{brand.dop}</TableCell>
                                                         <TableCell>{brand.insulationClass}</TableCell>
                                                         <TableCell>{brand.efficiency}</TableCell>
@@ -2424,6 +2430,18 @@ const InquiryForm = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
+                        {/* Frame Size PreFix*/}
+                        <Grid size={{ xs: 12, sm: 1 }} >
+                            <FormControl fullWidth>
+                                <TextField
+                                    fullWidth
+                                    label="Prefix"
+                                    name="prefix"
+                                    value={brandInput.prefix}
+                                    onChange={handleBrandChange}
+                                />
+                            </FormControl>
+                        </Grid>
 
                         {/* Frame Size */}
                         <Grid size={{ xs: 12, sm: 2 }} >
@@ -2434,6 +2452,17 @@ const InquiryForm = () => {
                                 options={frameSizeOptions}
                                 onChange={handleBrandChange}
                             />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 1 }} >
+                            <FormControl fullWidth>
+                                <TextField
+                                    fullWidth
+                                    label="Suffix"
+                                    name="suffix"
+                                    value={brandInput.suffix}
+                                    onChange={handleBrandChange}
+                                />
+                            </FormControl>
                         </Grid>
 
                         {/* DOP */}
