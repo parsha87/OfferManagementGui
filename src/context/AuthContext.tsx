@@ -9,7 +9,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<string | null>('Prashant Ashtekar');
+  const [user, setUser] = useState<string | null>(' ');
 
   const login = (username: string) => setUser(username);
   const logout = () => setUser(null);

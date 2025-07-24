@@ -61,6 +61,7 @@ const Login = () => {
 
       // Save token to sessionStorage
       sessionStorage.setItem('token', token);
+      sessionStorage.setItem('username', name);
       sessionStorage.setItem('role', role);
 
       // Set user in context

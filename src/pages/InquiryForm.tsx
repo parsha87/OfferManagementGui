@@ -51,8 +51,6 @@ export interface MotorMapping {
     techDetailsListPrice: string;
     techDetailsDiscount: string;
     isAmountManuallyEdited: boolean;
-    prefix: string;
-    suffix: string;
 
 }
 
@@ -222,8 +220,6 @@ const InquiryForm = () => {
         techDetailsDiscount: '',
         techDetailsListPrice: '',
         isAmountManuallyEdited: false,
-        prefix: '',
-        suffix: ''
 
     });
 
@@ -816,8 +812,6 @@ const InquiryForm = () => {
             techDetailsDiscount: '',
             techDetailsListPrice: '',
             isAmountManuallyEdited: false,
-            prefix: '',
-            suffix: ''
 
         });
         setOpenModal(true);
@@ -936,9 +930,12 @@ const InquiryForm = () => {
 
     const handleSubmit = async () => {
         if (!validateFormData()) return;
+        var user = sessionStorage.getItem('username') || ' ';
 
         console.log('Submitted:', formData);
         if (id) {
+
+            formData.updatedBy = user;
 
             // Destructure to exclude 'uploadedFiles'
             const { uploadedFiles, ...modelOnly } = formData;
@@ -970,6 +967,7 @@ const InquiryForm = () => {
         else {
             try {
 
+                formData.createdBy = user;
                 // Destructure to exclude 'uploadedFile'
                 const { uploadedFiles, ...modelOnly } = formData;
 
@@ -980,8 +978,6 @@ const InquiryForm = () => {
                     });
                 }
                 formDataToSend.append("model", JSON.stringify(modelOnly)); // Add only model data
-
-
                 // Send the request using Axios
                 const response = await api.post('Inquiry', formDataToSend, {
                     headers: {
@@ -1809,7 +1805,7 @@ const InquiryForm = () => {
                                                         <TableCell>{brand.hp}</TableCell>
                                                         <TableCell>{brand.phase}</TableCell>
                                                         <TableCell>{brand.pole}</TableCell>
-                                                        <TableCell>{brand.prefix}{brand.frameSize}{brand.suffix}</TableCell>
+                                                        <TableCell>{brand.frameSize}</TableCell>
                                                         <TableCell>{brand.dop}</TableCell>
                                                         <TableCell>{brand.insulationClass}</TableCell>
                                                         <TableCell>{brand.efficiency}</TableCell>
@@ -2430,18 +2426,6 @@ const InquiryForm = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        {/* Frame Size PreFix*/}
-                        <Grid size={{ xs: 12, sm: 1 }} >
-                            <FormControl fullWidth>
-                                <TextField
-                                    fullWidth
-                                    label="Prefix"
-                                    name="prefix"
-                                    value={brandInput.prefix}
-                                    onChange={handleBrandChange}
-                                />
-                            </FormControl>
-                        </Grid>
 
                         {/* Frame Size */}
                         <Grid size={{ xs: 12, sm: 2 }} >
@@ -2452,17 +2436,6 @@ const InquiryForm = () => {
                                 options={frameSizeOptions}
                                 onChange={handleBrandChange}
                             />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 1 }} >
-                            <FormControl fullWidth>
-                                <TextField
-                                    fullWidth
-                                    label="Suffix"
-                                    name="suffix"
-                                    value={brandInput.suffix}
-                                    onChange={handleBrandChange}
-                                />
-                            </FormControl>
                         </Grid>
 
                         {/* DOP */}

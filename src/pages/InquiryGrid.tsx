@@ -594,7 +594,7 @@ const InquiryGrid = () => {
   return (
     <>
       {/* Full-screen Loader */}
-      {loading && (
+      {loading ? (
         <Box
           sx={{
             position: 'fixed',
@@ -611,106 +611,105 @@ const InquiryGrid = () => {
         >
           <CircularProgress size={70} thickness={4.5} color="primary" />
         </Box>
-      )}
+      )
+        :
+        (
+          <Box
+            display="flex"
+            flexDirection={{ xs: 'column', sm: 'row' }}
+            flexWrap="wrap"
+            alignItems="flex-start"
+            justifyContent="space-start"
+            gap={2}
+            mb={2}
+          >
+            <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}>
+              Add Inquiry
+            </Button>
 
-      {/* <Box mt={3} px={3}> */}
-      {/* Top Action Bar */}
-      <Box
-        display="flex"
-        flexDirection={{ xs: 'column', sm: 'row' }}
-        flexWrap="wrap"
-        alignItems="flex-start"
-        justifyContent="space-start"
-        gap={2}
-        mb={2}
-      >
-        <Button variant="contained" color="primary" onClick={() => navigate('/inquiries/new')}>
-          Add Inquiry
-        </Button>
+            <Box display="flex" gap={2} flexWrap="wrap">
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel shrink>Customer Type</InputLabel>
+                <Select
+                  label="Customer Type"
+                  value={customerTypeFilter}
+                  onChange={customerTypeChange}
+                  displayEmpty
+                  renderValue={(selected) => (selected === '' ? 'All' : selected)}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {customerTypeOptions.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel shrink>Customer Type</InputLabel>
-            <Select
-              label="Customer Type"
-              value={customerTypeFilter}
-              onChange={customerTypeChange}
-              displayEmpty
-              renderValue={(selected) => (selected === '' ? 'All' : selected)}
-            >
-              <MenuItem value="">All</MenuItem>
-              {customerTypeOptions.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel shrink>Region</InputLabel>
+                <Select
+                  label="Region"
+                  value={regionFilter}
+                  onChange={handleRegionChange}
+                  displayEmpty
+                  renderValue={(selected) => (selected === '' ? 'All' : selected)}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {regionOptions.map((region) => (
+                    <MenuItem key={region} value={region}>
+                      {region}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel shrink>Region</InputLabel>
-            <Select
-              label="Region"
-              value={regionFilter}
-              onChange={handleRegionChange}
-              displayEmpty
-              renderValue={(selected) => (selected === '' ? 'All' : selected)}
-            >
-              <MenuItem value="">All</MenuItem>
-              {regionOptions.map((region) => (
-                <MenuItem key={region} value={region}>
-                  {region}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel shrink>Customer Name</InputLabel>
+                <Select
+                  label="Customer Name"
+                  value={customerNameFilter}
+                  onChange={customerNameChange}
+                  displayEmpty
+                  renderValue={(selected) => (selected === '' ? 'All' : selected)}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {customerNameOptions.map((name) => (
+                    <MenuItem key={name} value={name}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel shrink>Customer Name</InputLabel>
-            <Select
-              label="Customer Name"
-              value={customerNameFilter}
-              onChange={customerNameChange}
-              displayEmpty
-              renderValue={(selected) => (selected === '' ? 'All' : selected)}
-            >
-              <MenuItem value="">All</MenuItem>
-              {customerNameOptions.map((name) => (
-                <MenuItem key={name} value={name}>
-                  {name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel shrink>Status</InputLabel>
+                <Select
+                  label="Status"
+                  value={statusFilter}
+                  onChange={handleStatusChange}
+                  displayEmpty
+                  renderValue={(selected) => (selected === '' ? 'All' : selected)}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {statusOptions.map((status) => (
+                    <MenuItem key={status} value={status}>
+                      {status}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel shrink>Status</InputLabel>
-            <Select
-              label="Status"
-              value={statusFilter}
-              onChange={handleStatusChange}
-              displayEmpty
-              renderValue={(selected) => (selected === '' ? 'All' : selected)}
-            >
-              <MenuItem value="">All</MenuItem>
-              {statusOptions.map((status) => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <Button variant="outlined" color="secondary" onClick={resetFilters}>
+                Reset Filters
+              </Button>
+            </Box>
+            {/* </Box> */}
 
-          <Button variant="outlined" color="secondary" onClick={resetFilters}>
-            Reset Filters
-          </Button>
-        </Box>
-        {/* </Box> */}
-
-        {/* Data Table */}
-        <Box sx={{ width: '100%', overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 1200 }}>
-            {/* <DataGrid
+            {/* Data Table */}
+            <Box sx={{ width: '100%', overflowX: 'auto' }}>
+              <Box sx={{ minWidth: 1200 }}>
+                {/* <DataGrid
               rows={rows}
               columns={inquiryColumns}
               getRowId={(row) => row.inquiryId}
@@ -730,107 +729,107 @@ const InquiryGrid = () => {
             /> */}
 
 
-            <DataGrid
-              rows={rows}
-              columns={inquiryColumns}
-              getRowId={(row) => row.inquiryId}
-              paginationModel={paginationModel}
-              onPaginationModelChange={(model) => setPaginationModel(model)}
-              pageSizeOptions={[10, 20, 50]}
-              loading={loading}
-              autoHeight
-              disableRowSelectionOnClick
-              sx={{
-                '& .MuiDataGrid-cell': {
-                  whiteSpace: 'nowrap',
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: '#f5f5f5',
-                },
-              }}
-            />
+                <DataGrid
+                  rows={rows}
+                  columns={inquiryColumns}
+                  getRowId={(row) => row.inquiryId}
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={(model) => setPaginationModel(model)}
+                  pageSizeOptions={[10, 20, 50]}
+                  loading={loading}
+                  autoHeight
+                  disableRowSelectionOnClick
+                  sx={{
+                    '& .MuiDataGrid-cell': {
+                      whiteSpace: 'nowrap',
+                    },
+                    '& .MuiDataGrid-columnHeaders': {
+                      backgroundColor: '#f5f5f5',
+                    },
+                  }}
+                />
 
-          </Box>
-        </Box>
-
-
+              </Box>
+            </Box>
 
 
-        {/* Modal for Technical Details */}
-        <Modal open={openModal} onClose={handleCloseModal}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              bgcolor: 'background.paper',
-              boxShadow: 24,
-              p: 4,
-              borderRadius: 2,
-            }}
-          >
-            <SectionHeader title="Offer Details" />
-            <IconButton
-              onClick={handleCloseModal}
-              sx={{ position: 'absolute', top: 8, right: 8 }}
-            >
-              <GridCloseIcon />
-            </IconButton>
 
-            <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
-              <img
-                src="src/assets/offerImage.jpg"
-                alt="Offer Preview"
-                style={{ maxHeight: 150, borderRadius: 4 }}
-              />
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={handleDownload}
-                startIcon={<PictureAsPdfIcon />}
+
+            {/* Modal for Technical Details */}
+            <Modal open={openModal} onClose={handleCloseModal}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '90%',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  bgcolor: 'background.paper',
+                  boxShadow: 24,
+                  p: 4,
+                  borderRadius: 2,
+                }}
               >
-                Download PDF
-              </Button>
-            </Box>
-            <Box mb={3} sx={{ fontFamily: 'Arial', fontSize: '14px' }}>
+                <SectionHeader title="Offer Details" />
+                <IconButton
+                  onClick={handleCloseModal}
+                  sx={{ position: 'absolute', top: 8, right: 8 }}
+                >
+                  <GridCloseIcon />
+                </IconButton>
 
-              <Box display="flex" justifyContent="space-between" alignItems="flex-start"></Box>
-              {/* Ref and Date */}
-              <Box textAlign="left" mb={2}>
-                <Typography variant="body2" fontWeight="bold">
-                  Ref No: {formData.enquiryNo || 'N/A'}
-                </Typography>
-                <Typography variant="body2" fontWeight="bold" mt={1}>
-                  Date: <strong>{new Date(formData.customerRfqdate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
-                </Typography>
-              </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
+                  <img
+                    src="src/assets/offerImage.jpg"
+                    alt="Offer Preview"
+                    style={{ maxHeight: 150, borderRadius: 4 }}
+                  />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleDownload}
+                    startIcon={<PictureAsPdfIcon />}
+                  >
+                    Download PDF
+                  </Button>
+                </Box>
+                <Box mb={3} sx={{ fontFamily: 'Arial', fontSize: '14px' }}>
 
-              {/* Address Section */}
-              <Box mt={3}>
-                <Typography><strong>To,</strong></Typography>
-                <Typography>{formData.customerName}</Typography>
-                <Typography>{formData.custAddress}</Typography>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start"></Box>
+                  {/* Ref and Date */}
+                  <Box textAlign="left" mb={2}>
+                    <Typography variant="body2" fontWeight="bold">
+                      Ref No: {formData.enquiryNo || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" mt={1}>
+                      Date: <strong>{new Date(formData.customerRfqdate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
+                    </Typography>
+                  </Box>
 
-                <Box mt={2}>
-                  <Typography><strong>Kind Attn:</strong> {`${formData.salutation} ${formData.cpfirstName} ${formData.cplastName}`}</Typography>
-                  <Typography><strong>RFQ No:</strong> {formData.customerRfqno || 'N/A'}</Typography>
+                  {/* Address Section */}
+                  <Box mt={3}>
+                    <Typography><strong>To,</strong></Typography>
+                    <Typography>{formData.customerName}</Typography>
+                    <Typography>{formData.custAddress}</Typography>
+
+                    <Box mt={2}>
+                      <Typography><strong>Kind Attn:</strong> {`${formData.salutation} ${formData.cpfirstName} ${formData.cplastName}`}</Typography>
+                      <Typography><strong>RFQ No:</strong> {formData.customerRfqno || 'N/A'}</Typography>
+                    </Box>
+
+                    <Box mt={2}>
+                      <Typography>Dear Sir,</Typography>
+                      <Typography>
+                        We are pleased to offer the following against your enquiry dated{' '}
+                        <strong>{new Date(formData.customerRfqdate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>:
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
 
-                <Box mt={2}>
-                  <Typography>Dear Sir,</Typography>
-                  <Typography>
-                    We are pleased to offer the following against your enquiry dated{' '}
-                    <strong>{new Date(formData.customerRfqdate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>:
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            {/* <Box mb={2}>
+                {/* <Box mb={2}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr>
@@ -849,8 +848,8 @@ const InquiryGrid = () => {
               </table>
             </Box> */}
 
-            {/* DataGrid - Technical Summary */}
-            {/* <Box sx={{ width: '100%', overflow: 'auto', mb: 4 }}>
+                {/* DataGrid - Technical Summary */}
+                {/* <Box sx={{ width: '100%', overflow: 'auto', mb: 4 }}>
               <DataGrid
                 rows={selectedTechnicalDetails}
                 columns={technicalDetailsColumns}
@@ -872,129 +871,131 @@ const InquiryGrid = () => {
               />
             </Box> */}
 
-            {/* Full Technical Table - Grouped by Brand */}
-            <Box sx={{ width: '100%', overflow: 'hidden', mt: 3 }}>
-              {Object.entries(groupByBrand(selectedTechnicalDetails)).map(([brand, rows]) => (
-                <Box key={brand} mb={4}>
-                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold', color: '#1a1a1a' }}>
-                    Brand: {brand}
-                  </Typography>
-                  <DataGrid
-                    rows={rows}
-                    columns={technicalDetailsColumnsAll}
-                    getRowId={(row) => row.id || row.rowIndex}
-                    autoHeight
-                    hideFooter
-                    sx={{
-                      border: '2px solid black',
-                      '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#f5f5f5',
-                        borderBottom: '2px solid black',
-                      },
-                      '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
-                        border: '1px solid black',
-                        fontSize: '14px',
-                        padding: '8px',
-                      },
-                    }}
-                  />
-                  <Box textAlign="right" mt={1}>
-                    <Typography variant="body2" fontWeight="bold">
-                      Brand Total:{" "}
-                      {
-                        new Intl.NumberFormat('en-IN', {
-                          style: 'currency',
-                          currency: formData.selectedCurrency || 'INR'
-                        }).format(
-                          rows.reduce((sum, row) =>
-                            sum + ((Number(row.amount) || 0) * (Number(row.quantity) || 0)), 0
-                          )
-                        )
-                      }
-                    </Typography>
-                  </Box>
+                {/* Full Technical Table - Grouped by Brand */}
+                <Box sx={{ width: '100%', overflow: 'hidden', mt: 3 }}>
+                  {Object.entries(groupByBrand(selectedTechnicalDetails)).map(([brand, rows]) => (
+                    <Box key={brand} mb={4}>
+                      <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold', color: '#1a1a1a' }}>
+                        Brand: {brand}
+                      </Typography>
+                      <DataGrid
+                        rows={rows}
+                        columns={technicalDetailsColumnsAll}
+                        getRowId={(row) => row.id || row.rowIndex}
+                        autoHeight
+                        hideFooter
+                        sx={{
+                          border: '2px solid black',
+                          '& .MuiDataGrid-columnHeaders': {
+                            backgroundColor: '#f5f5f5',
+                            borderBottom: '2px solid black',
+                          },
+                          '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
+                            border: '1px solid black',
+                            fontSize: '14px',
+                            padding: '8px',
+                          },
+                        }}
+                      />
+                      <Box textAlign="right" mt={1}>
+                        <Typography variant="body2" fontWeight="bold">
+                          Brand Total:{" "}
+                          {
+                            new Intl.NumberFormat('en-IN', {
+                              style: 'currency',
+                              currency: formData.selectedCurrency || 'INR'
+                            }).format(
+                              rows.reduce((sum, row) =>
+                                sum + ((Number(row.amount) || 0) * (Number(row.quantity) || 0)), 0
+                              )
+                            )
+                          }
+                        </Typography>
+                      </Box>
 
+                    </Box>
+                  ))}
                 </Box>
-              ))}
-            </Box>
 
 
 
-            {/* Notes */}
-            <Box mb={4}>
-              {/* <Typography paragraph> */}
-              {/* QUOTE INCLUDING SPECIAL OPTION "SPECIAL CABLE ENTRIES" ... */}
-              {/* </Typography> */}
-              <Typography variant="subtitle1"><strong>Note:</strong></Typography>
-              <ul>
-                {formData.customerType == 'Export' && (
-                  <li>Taxes : Nill</li>
-                )}
-                {formData.customerType !== 'Export' && (
-                  <li>Taxes : 18% GST Extra</li>
-                )}
-                <li>INCO Terms: {formData.stdIncoTerms}</li>
-                <li>Payment Terms: {formData.stdPaymentTerms}</li>
-                <li>Validity: {new Date(formData.offerDueDate).toLocaleDateString()}</li>
-              </ul>
-              {/* <Box */}
-              {/* sx={{ */}
-              {/* border: '2px solid black', */}
-              {/* padding: 2, */}
-              {/* mt: 2, */}
-              {/* fontSize: '14px', */}
-              {/* }} */}
-              {/* > */}
-              {/* <p><strong>SHIP METHOD:</strong> NA</p> */}
-              {/* <p><strong>WARRANTY:</strong> 12 MONTHS...</p> */}
-              {/* </Box> */}
-            </Box>
+                {/* Notes */}
+                <Box mb={4}>
+                  {/* <Typography paragraph> */}
+                  {/* QUOTE INCLUDING SPECIAL OPTION "SPECIAL CABLE ENTRIES" ... */}
+                  {/* </Typography> */}
+                  <Typography variant="subtitle1"><strong>Note:</strong></Typography>
+                  <ul>
+                    {formData.customerType == 'Export' && (
+                      <li>Taxes : Nill</li>
+                    )}
+                    {formData.customerType !== 'Export' && (
+                      <li>Taxes : 18% GST Extra</li>
+                    )}
+                    <li>INCO Terms: {formData.stdIncoTerms}</li>
+                    <li>Payment Terms: {formData.stdPaymentTerms}</li>
+                    <li>Validity: {new Date(formData.offerDueDate).toLocaleDateString()}</li>
+                  </ul>
+                  {/* <Box */}
+                  {/* sx={{ */}
+                  {/* border: '2px solid black', */}
+                  {/* padding: 2, */}
+                  {/* mt: 2, */}
+                  {/* fontSize: '14px', */}
+                  {/* }} */}
+                  {/* > */}
+                  {/* <p><strong>SHIP METHOD:</strong> NA</p> */}
+                  {/* <p><strong>WARRANTY:</strong> 12 MONTHS...</p> */}
+                  {/* </Box> */}
+                </Box>
 
-            {/* Logos */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: 2,
-                mt: 4,
-              }}
-            >
-              {imageList.map((file, index) => (
-                <img
-                  key={index}
-                  src={`src/assets/${file}`}
-                  alt={file}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    objectFit: 'contain',
-                    backgroundColor: '#f5f5f5',
-                    padding: 4,
-                    borderRadius: 4,
+                {/* Logos */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 2,
+                    mt: 4,
                   }}
-                />
-              ))}
-            </Box>
+                >
+                  {imageList.map((file, index) => (
+                    <img
+                      key={index}
+                      src={`src/assets/${file}`}
+                      alt={file}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        objectFit: 'contain',
+                        backgroundColor: '#f5f5f5',
+                        padding: 4,
+                        borderRadius: 4,
+                      }}
+                    />
+                  ))}
+                </Box>
 
-            {/* Close Button */}
-            <Box mt={3} textAlign="right">
-              <Button variant="contained" onClick={handleCloseModal}>
-                Close
-              </Button>
-            </Box>
+                {/* Close Button */}
+                <Box mt={3} textAlign="right">
+                  <Button variant="contained" onClick={handleCloseModal}>
+                    Close
+                  </Button>
+                </Box>
+              </Box>
+            </Modal>
+
+            {/* Confirm Delete Dialog */}
+            <ConfirmDialog
+              open={confirmDialogOpen}
+              title="Delete Inquiry"
+              content="Are you sure you want to delete this inquiry?"
+              onClose={handleCloseConfirmDialog}
+              onConfirm={handleConfirmDelete}
+            />
           </Box>
-        </Modal>
-
-        {/* Confirm Delete Dialog */}
-        <ConfirmDialog
-          open={confirmDialogOpen}
-          title="Delete Inquiry"
-          content="Are you sure you want to delete this inquiry?"
-          onClose={handleCloseConfirmDialog}
-          onConfirm={handleConfirmDelete}
-        />
-      </Box>
+        )
+      }
     </>
   );
 };
