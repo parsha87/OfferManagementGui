@@ -503,16 +503,19 @@ const InquiryGrid = () => {
       width: 150,
       align: 'right',
       valueFormatter: (params: GridRenderCellParams<any>) => {
-        const value = Number(params); // ✅ FIXED: get actual value
-        const currency = params.row?.selectedCurrency || 'INR'; // use optional chaining just in case
+        if (params != null) {
+          const value = Number(params); // ✅ Correct: extract numeric value from params
+          const currency = params.row?.selectedCurrency ?? 'INR';
 
-        return isNaN(value)
-          ? ''
-          : value.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 2,
-          });
+          return isNaN(value)
+            ? ''
+            : value.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
+              style: 'currency',
+              currency: currency,
+              minimumFractionDigits: 2,
+            });
+        }
+        return 0;
       },
     },
     { field: 'status', headerName: 'Status', align: 'center', width: 120 },
@@ -735,7 +738,7 @@ const InquiryGrid = () => {
                   getRowId={(row) => row.inquiryId}
                   paginationModel={paginationModel}
                   onPaginationModelChange={(model) => setPaginationModel(model)}
-                  pageSizeOptions={[10, 20, 50]}
+                  pageSizeOptions={[5, 10, 20, 50]}
                   loading={loading}
                   autoHeight
                   disableRowSelectionOnClick
