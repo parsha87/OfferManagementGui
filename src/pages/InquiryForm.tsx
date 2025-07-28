@@ -1745,23 +1745,23 @@ const InquiryForm = () => {
                                         <Table stickyHeader size="small">
                                             <TableHead>
                                                 <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
-                                                    <TableCell>Action</TableCell>
+                                                    <TableCell sx={{width :100}}>Action</TableCell>
                                                     <TableCell>Motor Type</TableCell>
                                                     <TableCell>KW</TableCell>
                                                     <TableCell>HP</TableCell>
                                                     <TableCell>Phase</TableCell>
-                                                    <TableCell>Pole</TableCell>
-                                                    <TableCell>Frame Size</TableCell>
-                                                    <TableCell>DOP</TableCell>
+                                                    {/* <TableCell>Pole</TableCell> */}
+                                                    {/* <TableCell>Frame Size</TableCell> */}
+                                                    {/* <TableCell>DOP</TableCell>
                                                     <TableCell>Insu. Class</TableCell>
                                                     <TableCell>Efficiency</TableCell>
                                                     <TableCell>Voltage</TableCell>
-                                                    <TableCell>Frequency</TableCell>
+                                                    <TableCell>Frequency</TableCell> */}
                                                     <TableCell>Qty</TableCell>
-                                                    <TableCell>Mounting</TableCell>
-                                                    <TableCell>Safe/Hazardous</TableCell>
+                                                    {/* <TableCell>Mounting</TableCell>
+                                                    <TableCell>Safe/Hazardous</TableCell> */}
                                                     <TableCell>Brand</TableCell>
-                                                    <TableCell>Zone</TableCell>
+                                                    {/* <TableCell>Zone</TableCell>
                                                     <TableCell>Temp Class</TableCell>
                                                     <TableCell>Gas Group</TableCell>
                                                     <TableCell>Hazardous Desc</TableCell>
@@ -1775,7 +1775,7 @@ const InquiryForm = () => {
                                                     <TableCell>EncoderMounting</TableCell>
                                                     <TableCell>EncoderMountingIfYes</TableCell>
                                                     <TableCell>Application</TableCell>
-                                                    <TableCell>Segment</TableCell>
+                                                    <TableCell>Segment</TableCell> */}
                                                     {/* <TableCell>Amount</TableCell> */}
                                                     <TableCell>Total Amt</TableCell>
                                                     <TableCell>Product Description</TableCell>
@@ -1804,18 +1804,18 @@ const InquiryForm = () => {
                                                         <TableCell>{brand.kw}</TableCell>
                                                         <TableCell>{brand.hp}</TableCell>
                                                         <TableCell>{brand.phase}</TableCell>
-                                                        <TableCell>{brand.pole}</TableCell>
+                                                        {/* <TableCell>{brand.pole}</TableCell>
                                                         <TableCell>{brand.frameSize}</TableCell>
                                                         <TableCell>{brand.dop}</TableCell>
                                                         <TableCell>{brand.insulationClass}</TableCell>
                                                         <TableCell>{brand.efficiency}</TableCell>
                                                         <TableCell>{brand.voltage}</TableCell>
-                                                        <TableCell>{brand.frequency}</TableCell>
+                                                        <TableCell>{brand.frequency}</TableCell> */}
                                                         <TableCell>{brand.quantity}</TableCell>
-                                                        <TableCell>{brand.mounting}</TableCell>
-                                                        <TableCell>{brand.safeAreaHazardousArea}</TableCell>
+                                                        {/* <TableCell>{brand.mounting}</TableCell>
+                                                        <TableCell>{brand.safeAreaHazardousArea}</TableCell> */}
                                                         <TableCell>{brand.brand}</TableCell>
-                                                        <TableCell>{brand.zone}</TableCell>
+                                                        {/* <TableCell>{brand.zone}</TableCell>
                                                         <TableCell>{brand.tempClass}</TableCell>
                                                         <TableCell>{brand.gasGroup}</TableCell>
                                                         <TableCell>{brand.hardadousDescription}</TableCell>
@@ -1829,7 +1829,7 @@ const InquiryForm = () => {
                                                         <TableCell>{brand.encoderMounting}</TableCell>
                                                         <TableCell>{brand.encoderMountingIfYes}</TableCell>
                                                         <TableCell>{brand.application}</TableCell>
-                                                        <TableCell>{brand.segment}</TableCell>
+                                                        <TableCell>{brand.segment}</TableCell> */}
                                                         {/* <TableCell>
                                                             {new Intl.NumberFormat('en-IN', {
                                                                 style: 'currency',
