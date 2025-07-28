@@ -51,7 +51,8 @@ export interface MotorMapping {
     techDetailsListPrice: string;
     techDetailsDiscount: string;
     isAmountManuallyEdited: boolean;
-
+    prefix: string;
+    suffix: string;
 }
 
 interface InquiryFormData {
@@ -220,7 +221,8 @@ const InquiryForm = () => {
         techDetailsDiscount: '',
         techDetailsListPrice: '',
         isAmountManuallyEdited: false,
-
+        prefix: '',
+        suffix: ''
     });
 
     const [formData, setFormData] = useState<InquiryFormData>({
@@ -265,7 +267,7 @@ const InquiryForm = () => {
         uploadedFiles: [], // ✅ no error now
         visitsections: [],
         allocatedto: '',
-        selectedCurrency: '',
+        selectedCurrency: 'INR',
         isListPrice: false,
     });
 
@@ -311,7 +313,7 @@ const InquiryForm = () => {
         uploadedFiles: [], // ✅ no error now
         visitsections: [],
         allocatedto: '',
-        selectedCurrency: '',
+        selectedCurrency: 'INR',
         isListPrice: false,
     });
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -675,6 +677,16 @@ const InquiryForm = () => {
             toast.error('Enter Quantity.');
             return; // Don't add if brand is empty
         }
+        if (!brandInput.amount) {
+            toast.error('Enter Amount.');
+            return; // Don't add if brand is empty
+        }
+
+         if (brandInput.accessories.length == 0) {
+            toast.error('Select Accessories.');
+            return; // Don't add if brand is empty
+        }
+
         // if (!brandInput.techDetailsListPrice) {
         //     toast.error('Enter List Price.');
         //     return; // Don't add if brand is empty
@@ -812,6 +824,8 @@ const InquiryForm = () => {
             techDetailsDiscount: '',
             techDetailsListPrice: '',
             isAmountManuallyEdited: false,
+            prefix: '',
+            suffix: ''
 
         });
         setOpenModal(true);
@@ -1804,6 +1818,8 @@ const InquiryForm = () => {
                                                         <TableCell>{brand.kw}</TableCell>
                                                         <TableCell>{brand.hp}</TableCell>
                                                         <TableCell>{brand.phase}</TableCell>
+                                                        <TableCell>{brand.pole}</TableCell>
+                                                        <TableCell>{brand.prefix}{brand.frameSize}{brand.suffix}</TableCell>
                                                         {/* <TableCell>{brand.pole}</TableCell>
                                                         <TableCell>{brand.frameSize}</TableCell>
                                                         <TableCell>{brand.dop}</TableCell>
@@ -2426,7 +2442,17 @@ const InquiryForm = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
-
+                        <Grid size={{ xs: 12, sm: 1 }} >
+                            <FormControl fullWidth>
+                                <TextField
+                                    fullWidth
+                                    label="Prefix"
+                                    name="prefix"
+                                    value={brandInput.prefix}
+                                    onChange={handleBrandChange}
+                                />
+                            </FormControl>
+                        </Grid>
                         {/* Frame Size */}
                         <Grid size={{ xs: 12, sm: 2 }} >
                             <CustomSelect
@@ -2436,6 +2462,17 @@ const InquiryForm = () => {
                                 options={frameSizeOptions}
                                 onChange={handleBrandChange}
                             />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 1 }} >
+                            <FormControl fullWidth>
+                                <TextField
+                                    fullWidth
+                                    label="Suffix"
+                                    name="suffix"
+                                    value={brandInput.suffix}
+                                    onChange={handleBrandChange}
+                                />
+                            </FormControl>
                         </Grid>
 
                         {/* DOP */}
