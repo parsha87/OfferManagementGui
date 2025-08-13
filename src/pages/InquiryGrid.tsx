@@ -564,22 +564,24 @@ const InquiryGrid = () => {
     { field: 'voltage', headerName: 'Voltage', width: 100, align: 'center', headerAlign: 'center' },
     { field: 'frequency', headerName: 'Frequency', width: 100, align: 'center', headerAlign: 'center' },
     { field: 'narration', headerName: 'Product', width: 100, align: 'center', headerAlign: 'center' },
-    {
-      field: 'amount',
-      headerName: 'Unit Price',
-      width: 150,
-      align: 'right',
-      headerAlign: 'right',
-      valueFormatter: (params: any) =>
-        new Intl.NumberFormat('en-IN', {
-          style: 'currency',
-          currency: formData.selectedCurrency || 'INR',
-          minimumFractionDigits: 2,
-        }).format(Number(params?.value) || 0),
-    },
+   {
+  field: 'techDetailsListPrice',
+  headerName: 'Unit Price',
+  width: 150,
+  align: 'right',
+  headerAlign: 'right',
+  valueFormatter: (params: any) =>
+    new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: formData.selectedCurrency || 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(params) || 0),
+},
+
     { field: 'quantity', headerName: 'Quantity', width: 100, align: 'center', headerAlign: 'center' },
     {
-      field: 'totalAmount',
+      field: 'amount',
       headerName: 'Total',
       width: 150,
       align: 'right',
@@ -589,7 +591,7 @@ const InquiryGrid = () => {
           style: 'currency',
           currency: formData.selectedCurrency || 'INR',
           minimumFractionDigits: 2,
-        }).format(Number(params?.value) || 0),
+        }).format(Number(params) || 0),
     }
   ];
 
@@ -909,7 +911,7 @@ const InquiryGrid = () => {
                               currency: formData.selectedCurrency || 'INR'
                             }).format(
                               rows.reduce((sum, row) =>
-                                sum + ((Number(row.amount) || 0) * (Number(row.quantity) || 0)), 0
+                                sum + ((Number(row.amount) || 0) ), 0
                               )
                             )
                           }
